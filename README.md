@@ -4,6 +4,8 @@ Calculadora y simulador de notas para cuatro asignaturas USM, semestre 2026-2. P
 
 ![Rumbo con datos simulados de ejemplo](docs/vista-previa.jpg)
 
+**Página pública:** [Abrir Rumbo](https://visionstick.github.io/ponderaciones/)
+
 ## Asignaturas
 
 - Introducción al Cálculo — MAT070.
@@ -33,7 +35,7 @@ npm run build
 
 ## GitHub Pages
 
-En este repositorio: **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → /(root) → Save**.
+La página pública está activa y verificada. Para revisar o cambiar el origen de publicación en este repositorio: **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → /(root) → Save**.
 
 El sitio no requiere Jekyll ni una etapa de compilación para esta modalidad. `.nojekyll` lo indica explícitamente. Tras la activación inicial, los cambios en `main` se publican por GitHub Pages. La activación de Pages requiere permisos de administración; no se deben incluir tokens en el repositorio ni pedirlos en un chat.
 

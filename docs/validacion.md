@@ -26,3 +26,7 @@ Todas las notas siguientes son datos ficticios de prueba.
 | Pantalla de escritorio y marco móvil de 390px | Navegación y campos utilizables; sin desbordamiento horizontal de la página |
 
 La captura `vista-previa.jpg` muestra un ejemplo simulado. No contiene notas de un estudiante. La importación y exportación se verifican mediante pruebas del formato de datos; no se hizo una prueba de carga/descarga de archivos desde el navegador.
+
+## Publicación
+
+Se verificó `https://visionstick.github.io/ponderaciones/` en un navegador sin sesión de GitHub: carga la aplicación y el ejemplo simulado calcula 47,5 puntos acumulados, 75% del peso definido y una meta de 30 en Certamen 3. Las comprobaciones también finalizaron correctamente en GitHub Actions.
