@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#164f46">
+  <meta name="description" content="Ingresa las notas que ya tienes, simula las que vienen y descubre cuánto necesitas para aprobar. Cuatro ramos USM, cada uno con sus propias reglas.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'">
+  <title>Rumbo · Tus notas, tu próximo paso</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./src/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Ir a mis notas</a>
+  <div id="app"><main class="boot"><img src="./favicon.svg" width="54" height="54" alt=""><h1>Rumbo</h1><p>Preparando tu próximo paso…</p></main></div>
+  <noscript>Activa JavaScript para calcular tus notas. Rumbo hace todos los cálculos en tu navegador.</noscript>
+  <div id="toast" class="toast" role="status"></div>
+  <dialog id="dialog"><div id="dialog-content"></div></dialog>
+  <input id="import-file" type="file" accept="application/json,.json" hidden>
+</body>
+</html>
