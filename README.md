@@ -1,6 +1,6 @@
 # Rumbo · Tus notas, tu próximo paso
 
-Calculadora y simulador de notas para cuatro asignaturas USM, semestre 2026-2. Puedes ingresar solo las notas conocidas y ver requisitos, objetivos y alternativas de recuperación. Las notas se guardan exclusivamente en el navegador.
+Calculadora y simulador de notas para cinco asignaturas USM. Puedes ingresar solo las notas conocidas y ver requisitos, objetivos y alternativas de recuperación. Las notas se guardan exclusivamente en el navegador.
 
 ![Rumbo con datos simulados de ejemplo](docs/vista-previa.jpg)
 
@@ -9,9 +9,12 @@ Calculadora y simulador de notas para cuatro asignaturas USM, semestre 2026-2. P
 ## Asignaturas
 
 - Introducción al Cálculo — MAT070.
+- Cálculo en una Variable — MAT071.
 - Álgebra Lineal — MAT061.
 - Física General Mecánica — FIS11125, con laboratorio FIS111L.
 - Introducción a la Programación.
+
+La primera tarjeta destaca cuánto necesitas. La tabla de casos compara combinaciones concretas y permite probarlas como simulación y deshacerlas. Física calcula el laboratorio desde IS, IN y controles de laboratorio, incluyendo las evaluaciones pendientes.
 
 Cada asignatura tiene reglas independientes. La app distingue notas reales y simuladas, campos vacíos y ceros, aprobación directa y recuperación, y resultados definitivos y condicionados.
 
@@ -47,25 +50,31 @@ El workflow de comprobaciones ejecuta las verificaciones de sintaxis, las prueba
 | --- | --- |
 | `src/courses.js` | Catálogo, campos, parámetros, textos y fuentes |
 | `src/engine.js` | Reglas académicas, escenarios, límites y mensajes |
+| `src/scenarios.js` | Combinaciones de notas y cálculo independiente del laboratorio |
 | `src/rational.js` | Fracciones exactas y validación decimal |
 | `src/state.js` | Datos, versión, importación y almacenamiento |
 | `src/app.js` | Interfaz y comportamiento |
 | `styles.css` | Diseño responsive y accesibilidad visual |
 | `tests/academic.test.mjs` | Casos numéricos y restricciones por ramo |
+| `tests/improvements.test.mjs` | Correcciones, MAT071, casos y migración de datos |
 | `tests/data.test.mjs` | Valores inválidos, precisión y respaldos |
 | `docs/reglas-2026-2.md` | Contrato académico y decisiones documentadas |
 | `docs/agregar-asignaturas.md` | Cómo extender o actualizar el sitio |
 
 ## Precisión y límites conocidos
 
-- Las decisiones comparan fracciones exactas. No se convierte 54,99 en aprobación por redondeo visual.
+- Reglas `2026-2.2`: aprobación final desde54,5 y presentación al Global de Física desde49,5, según corrección del usuario. Dos certámenes de Física bajo50 bloquean aprobación y Global. Los mínimos específicos de laboratorio, certámenes y Global se verifican por separado.
+- Las decisiones comparan fracciones exactas:54,499999 no se convierte en54,5 por redondeo visual.
 - El mínimo sugerido se eleva a centésimas y se muestra también el entero suficiente. No se inventa redondeo administrativo de la universidad.
+- MAT071 usa el programa adjunto de2018. El factorη requiere un valor confirmado o simulado porque su fórmula no aparece en ese documento. Los empates entre peores certámenes con pesos distintos se muestran como alternativas; no se inventa cuál se reemplaza.
 - MAT070 menciona **6 y 8 controles** en secciones diferentes. El estudiante confirma el total en AULA o ingresa el promedio final oficial; hasta entonces el resultado es condicionado.
 - Física presenta factores de asistencia de cátedra y laboratorio sin explicar su combinación. Se usa el factor efectivo confirmado, o α=1 cuando las tres asistencias alcanzan el 80%. Los factores no se multiplican entre sí automáticamente.
-- FIS111L no especifica cantidades de experiencias; EF/ECA de Programación tampoco detallan todas sus notas. Se pueden configurar cantidades previstas o ingresar promedios **finales** oficiales. Un promedio provisional se debe simular, no registrar como final.
+- FIS111L no especifica cantidades de experiencias; se confirman los totales de IS, IN y CI antes de calcular un mínimo final. EF/ECA de Programación tampoco detallan todas sus notas. Se pueden configurar cantidades previstas o ingresar promedios **finales** oficiales. Un promedio provisional se debe simular, no registrar como final.
 - En Álgebra, un cero sancionado bloquea la proyección automática del reemplazo hasta aclarar el certamen habilitado.
 - En Física se modela una ausencia justificada a certamen. El reglamento no define inequívocamente múltiples ausencias; esos casos requieren coordinación.
 - Las situaciones excepcionales, sanciones y autorizaciones institucionales no se inventan ni sustituyen mediante el cálculo.
+
+Las notas de la versión2026-2.1 se migran explícitamente, conservando las notas reales, las simuladas y el formato anterior de laboratorio. Se avisa al usuario al cargar sus datos. Los ejemplos también conservan sus ajustes simulados al recargar, separados de la configuración real.
 
 ## Privacidad
 

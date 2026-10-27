@@ -42,6 +42,16 @@ export function parseGrade(raw) {
   if (value.lt(0) || value.cmp(100) > 0) return { value: null, error: 'La nota debe estar entre 0 y 100.' };
   return { value, error: null };
 }
+// A laboratory multiplier is not a grade. The source does not define a maximum.
+export function parseFactor(raw) {
+  if (raw === null || raw === undefined || String(raw).trim() === '') return { value: null, error: null };
+  if (!['string', 'number'].includes(typeof raw)) return { value: null, error: 'Ingresa el factor numérico confirmado.' };
+  let s = String(raw).trim().replace(',', '.');
+  if (s.startsWith('.')) s = '0' + s;
+  if (s.length > 16 || !/^\d+(\.\d{0,6})?$/.test(s)) return { value: null, error: 'Usa un factor positivo con hasta 6 decimales.' };
+  const value = q(s);
+  return value.cmp(0) <= 0 ? { value: null, error: 'El factor debe ser mayor que cero. Confirma su valor en AULA.' } : { value, error: null };
+}
 // Smallest passing hundredth. This is a recommendation precision, not an institutional rounding rule.
 export function minimumHundredth(predicate) {
   if (!predicate(q(100))) return null;

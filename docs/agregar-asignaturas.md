@@ -12,7 +12,7 @@
 
 ## Versiones y cambios de reglas
 
-El identificador de regla actual es `2026-2.1`. Un cambio académico que altera resultados debe cambiar `RULE_VERSION` y documentarse. La importación rechaza versiones distintas para impedir reinterpretar notas antiguas silenciosamente. Agregar una migración explícita con pruebas si se desea conservar datos entre versiones. Mantener los identificadores de evaluaciones estables dentro de una versión.
+El identificador de regla actual es `2026-2.2`. Un cambio académico que altera resultados debe cambiar `RULE_VERSION` y documentarse. La importación admite la versión actual y una migración explícita de2026-2.1: conserva notas e hipótesis, mantiene el laboratorio combinado anterior y agrega MAT071 vacío. Al cargar desde almacenamiento se avisa del cambio de reglas. Las demás versiones se rechazan. Agregar una migración explícita con pruebas si se desea conservar datos entre versiones. Mantener los identificadores de evaluaciones estables dentro de una versión.
 
 Los cambios de diseño o mensajes que no modifican reglas pueden conservar la versión académica. Nunca almacenar credenciales ni notas personales de usuarios en el código, fixtures, issues o capturas del proyecto.
 
@@ -23,3 +23,9 @@ Los cambios de diseño o mensajes que no modifican reglas pueden conservar la ve
 - La necesidad de Global no equivale a elegibilidad confirmada. Mostrar las condiciones que faltan.
 - En Global voluntario, advertir que rendirlo puede reducir una nota que ya aprobaba.
 - No asignar probabilidades (“probablemente”) ni umbrales de “crítico” que el reglamento no contiene.
+
+## Combinaciones y factores
+
+`src/scenarios.js` genera casos sin escribir notas reales. Cada hipótesis adicional debe ser visible; toda fila ofrecida debe volver a pasar las reglas del motor. Los factores positivos comoη usan un validador propio: no son notas0–100. No usar1 como valor implícito.
+
+MAT071 es un contraejemplo concreto a la monotonía: conGlobal fijo, cambiar la menor nota puede cambiar el peso sustituido. Hay una prueba que cruza esa discontinuidad; conservarla al extender el buscador.

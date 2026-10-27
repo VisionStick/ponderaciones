@@ -1,13 +1,13 @@
 {
   "name": "rumbo-ponderaciones",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Tus notas, tu próximo paso. Calculadora de asignaturas USM 2026-2.",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "build": "node scripts/build.mjs",
-    "check": "node --check src/app.js && node --check src/engine.js && node --check src/courses.js && node --check src/state.js"
+    "check": "node --check src/app.js && node --check src/engine.js && node --check src/courses.js && node --check src/state.js && node --check src/scenarios.js && node --check src/rational.js"
   },
   "engines": { "node": ">=22" }
 }

@@ -1,32 +1,47 @@
-# Validación de la primera versión
+# Validación · reglas 2026-2.2
 
-Verificada el 25 de octubre de 2026 con las reglas 2026-2.1.
+Actualización verificada el 26 de octubre de 2026 (Chile).
 
-## Comprobaciones automáticas
+## Pruebas automáticas
 
-`npm run check`, `npm test` y `npm run build` finalizaron correctamente. Las 88 pruebas incluyen los cuatro ramos: campos vacíos, ceros reales, valores inválidos, notas parciales, mínimos y máximos, límites exactos, restricciones de aprobación y de recuperación, redondeo, descartes, simulaciones y respaldos.
+`npm run check`, `npm test` y `npm run build` finalizaron correctamente. Las **139 pruebas** cubren los cinco ramos: campos vacíos, ceros, valores inválidos, notas parciales, mínimos y máximos, límites exactos, restricciones de aprobación y recuperación, descartes, simulaciones y respaldos.
 
-Los resultados esperados de los casos numéricos están derivados de las fórmulas documentadas, no de la salida del motor. Consulta `tests/academic.test.mjs`, `tests/data.test.mjs` y los ejemplos manuales de `docs/reglas-2026-2.md`.
+Los resultados de referencia están calculados independientemente en `docs/reglas-2026-2.md`. Las pruebas nuevas incluyen:
 
-## Comprobaciones en navegador
+- Aprobación final en54,5 y rechazo inmediatamente por debajo; mínimos particulares separados.
+- Física: presentación49,5; Global62 da54,5; Global61,99 no aprueba. Dos certámenes bajo50 bloquean incluso con Global100. Un50 exacto no cuenta como nota bajo50.
+- Laboratorio: IS/IN/CI separados, promedio conjunto de IN y CI, cantidades desconocidas, cero evaluaciones de uno de esos dos tipos y mínimo de la última nota pendiente.
+- MAT071: ponderaciones30/30/25/15, factorη obligatorio y distinto de una nota, Global sin mínimo de presentación, reemplazos con distintos pesos, empates, resultado no monótono y acceso reservado a quien no aprueba directamente.
+- Casos: cada combinación ofrecida verifica todos los mínimos; hipótesis adicionales visibles; ninguna modificación de notas reales. No se inventa unGlobal0 cuando se aprueba sin rendirlo.
+- Migración2026-2.1→2026-2.2: conserva notas e hipótesis y el laboratorio anterior. Los ajustes de ejemplos simulados sobreviven a la recarga sin cambiar la configuración real.
 
-Todas las notas siguientes son datos ficticios de prueba.
+## Pruebas de navegador
 
-| Prueba | Resultado comprobado |
+Todas las notas usadas fueron ficticias. Se comprobó la versión previa a publicación en escritorio y en un marco de390×844.
+
+| Acción | Resultado observado |
 | --- | --- |
-| MAT070, solo C1=60, modo promedio final de controles | 15 puntos definidos; 25% del peso; meta uniforme 53,34 |
-| MAT070, C=20/40/50 y PQ=40 | Global 90 aprueba; 89,99 no aprueba |
-| Alternar Mis notas / ¿Y si saco…? | La hipótesis no altera la nota real; se identifica la simulación |
-| Recargar la página | Las notas reales se conservan en el navegador |
-| Álgebra, C=60, Q=80, L1=L2=asistencia=0 | NF=58,5 y aprobación; laboratorio cero no bloquea |
-| Física, C=50, Q=T=45, NL=55, α=1 | PS=50; exige Global 62,5; con esa nota NF=55 |
-| Programación, C=20/100 y otros grupos=50 | NF=55 y aprobación; no hay un mínimo individual inventado |
-| Programación, C=0/100 y otros grupos=50 | Recuperativo 20 aprueba; 19,99 queda bajo 55 |
-| Editar Global dígito a dígito | Conserva foco y actualiza el resultado y su mensaje |
-| Pantalla de escritorio y marco móvil de 390px | Navegación y campos utilizables; sin desbordamiento horizontal de la página |
+| Ejemplo MAT070: C1=50 yC2=60 | Meta uniforme54; casos C3=20/40/60/80/100 con PQ88/68/48/28/8 |
+| Probar el caso C3=60,PQ=48 | Mensaje de aprobación simulada yNF54,5; notas reales vacías |
+| Deshacer el caso | Regresa a las dos notas de ejemplo y a la tabla de alternativas |
+| MAT071: C50/70/50,PT0,η1,G72 | Meta de Global70–74; nota final54–55,1; avisa del empate con distinto peso |
+| Física: C1=49,5 yC2=49,99, resto pendiente | Bloqueo por dos certámenes; no cumple requisitos de Global aun con asistencia desconocida |
+| Laboratorio: IS50/50,IN40,CI100 yCI pendiente | Necesita40 enCI2; al ingresarlo, NL55 |
+| Física: C50/50/50, Q=T=42,5, NL55, α1, G62 | Presentación49,5, final54,5, aprobación por Global |
+| Recargar el ejemplo | Conserva notas simuladas y sus ajustes; mantiene la meta54 |
+| Marco móvil | Navegación de cinco ramos, tabla de casos y controles utilizables; página sin desbordamiento horizontal |
 
-La captura `vista-previa.jpg` muestra un ejemplo simulado. No contiene notas de un estudiante. La importación y exportación se verifican mediante pruebas del formato de datos; no se hizo una prueba de carga/descarga de archivos desde el navegador.
+El cálculo interno de importación/exportación se valida mediante pruebas de su formato. No se realizó una prueba de carga/descarga de archivos desde el navegador en esta actualización. La captura `vista-previa.jpg` solo contiene un ejemplo simulado.
+
+## Mejoras apoyadas en investigación de interfaz
+
+Fuentes consultadas el26 de octubre de2026:
+
+- [Nielsen Norman Group: Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/). Aplicación: el objetivo aparece primero, y fórmulas, asistencias opcionales y ajustes secundarios se pueden desplegar cuando hacen falta.
+- [W3C WAI: User Notifications](https://www.w3.org/WAI/tutorials/forms/notifications/). Aplicación: errores específicos junto a los campos, enlaces desde el resumen de errores y aviso accesible al cambiar el estado del estudiante.
+
+Las fuentes orientan el diseño de la interfaz; ninguna define reglas académicas. Los reglamentos adjuntos y las correcciones explícitas del responsable del proyecto son las fuentes de los cálculos.
 
 ## Publicación
 
-Se verificó `https://visionstick.github.io/ponderaciones/` en un navegador sin sesión de GitHub: carga la aplicación y el ejemplo simulado calcula 47,5 puntos acumulados, 75% del peso definido y una meta de 30 en Certamen 3. Las comprobaciones también finalizaron correctamente en GitHub Actions.
+El sitio público del proyecto es `https://visionstick.github.io/ponderaciones/`. El repositorio ejecuta estas comprobaciones en GitHub Actions y publica desde `main` mediante GitHub Pages. La verificación de cada despliegue se comprueba contra el commit correspondiente.

@@ -11,3 +11,7 @@ This repository is a static Spanish-language academic calculator. Preserve per-c
 - Run `npm run check`, `npm test`, and `npm run build` after meaningful implementation changes.
 - Add independent numerical fixtures when adding or changing academic rules. Preserve existing edge cases.
 - Read `docs/agregar-asignaturas.md` before adding courses or migrating saved state.
+
+- User corrections are explicitly attributed in the academic contract; do not silently revert54.5/49.5 or apply them to separate minimum requirements.
+- MAT071 has unequal certamen weights. Preserve tied-replacement alternatives and the non-monotone Global regression test.
+- Keep migrations explicit and preserve both real and simulated notes, including legacy combined Physics lab inputs.
