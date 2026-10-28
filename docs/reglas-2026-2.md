@@ -1,10 +1,10 @@
-# Contrato académico · versión 2026-2.2
+# Contrato académico · versión 2026-2.3
 
 Fuentes: documentos suministrados por el usuario, leídos completos y contrastados visualmente. Las ecuaciones siguientes usan notas en escala 0–100 y comparaciones exactas. No se aplica un redondeo general a cada evaluación.
 
 **Correcciones solicitadas por el responsable del proyecto el 26 de octubre de 2026:** se usa 54,5 como mínimo de aprobación final y 49,5 como mínimo de presentación al Global de Física. Además, dos certámenes de Física bajo 50 bloquean la aprobación y el acceso al Global. Estas correcciones provienen del usuario: no se atribuyen a los PDF originales, que indican 55/50 y no incluyen ese bloqueo de dos certámenes. Los mínimos particulares permanecen separados: NL de Física ≥55, cada certamen de Física ≥50 para aprobación directa, Global de Física ≥50, y promedio de certámenes de Programación ≥55.
 
-MAT071 utiliza un programa aprobado el 11 de diciembre de 2018; no se presenta como un reglamento específico de 2026-2. Las fórmulas no definidas en ese programa quedan pendientes de confirmación.
+El 27 de octubre de 2026 el usuario reemplazó expresamente el documento anterior de MAT071 por cuatro capturas. El programa de 2018 deja de ser fuente de cálculo; se mantienen los umbrales solicitados previamente.
 
 ## MAT070 · Introducción al Cálculo
 
@@ -70,19 +70,26 @@ Fuente: Presentación_de_la_Asignatura__2026_2_.pdf, diapositivas4–11.
 - Si A=0.20CTL+0.20T+0.05EF+0.05ECA y M es el mayor certamen, R mínimo=max(0,110−M,218−4A−M).
 - Cantidades EF/ECA y pesos de las partes de cada tarea no están detallados: usar promedios finales oficiales o cantidades confirmadas; nunca asignar pesos arbitrarios a subtareas.
 
-## MAT071 · Cálculo en una Variable
+## MAT071 · Cálculo en una Variable · reglamento corregido
 
-Fuente: MAT 071 - CÁLCULO EN UNA VARIABLE (SCT-C.A.).pdf, pp.1–3; programa aprobado el 11/12/2018. La p.1 dice que no tiene examen; la p.3 sí contempla un certamen Global recuperativo. Se modelan como conceptos distintos.
+Fuentes: cuatro capturas entregadas por el usuario el 27/10/2026. `image.png` contiene la sección 7 del sistema de evaluación; `image(1).png` fija tres certámenes y tres controles, con promedio simple en ambos grupos; `image(3).png` incluye el factor, el Global voluntario y el tope de nota. Estas fuentes sustituyen el PDF de 2018.
 
-- B = 0.30C1 + 0.30C2 + 0.25C3 + 0.15PT; PS = B × η.
-- PT es la nota final oficial de taller. No se inventan pesos de actividades internas.
-- η es el factor de laboratorio. El documento no incluye su fórmula ni rango; el estudiante debe ingresar un factor positivo confirmado o una hipótesis visible. No se asigna1 automáticamente, no se trata como una nota sobre100 y no se agrega un tope de nota final que el programa no especifica.
-- Aprueba directamente con PS≥54,5 según la corrección del usuario. El PDF original indica55 para aprobar y hasta54 para rendir Global; la corrección fija la transición exacta en54,5.
-- Si PS<54,5, puede rendir Global. No se define mínimo de presentación ni mínimo de G. Global no está habilitado para quien ya aprueba directamente.
-- G reemplaza la menor nota de certamen, manteniendo el peso de ese certamen, incluso si el reemplazo empeora el resultado. Se vuelve a multiplicar por η.
-- Para un certamen j habilitado al reemplazo, con peso wj y nota Cj: G mínimo = max(0, Cj + (54,5/η − B)/wj). Se eleva a centésimas; más de100 no alcanza.
-- Si empatan las menores notas con pesos diferentes, el documento no especifica cuál reemplazar. Se muestran las posibilidades, sin elegir un desempate inventado. Los empates C1/C2 tienen el mismo peso y no cambian el resultado.
-- Con un Global fijo y notas ordinarias pendientes, el reemplazo puede cambiar de ponderación o la presentación pasar a aprobación directa. No hay una búsqueda binaria monótona válida para cualquier caso. Se pide completar o simular las notas pendientes; no se publican mínimos ni rangos extremos engañosos.
+- NC = (C1 + C2 + C3)/3; NQ = (Q1 + Q2 + Q3)/3.
+- B = 0,75NC + 0,25NQ; NF = min(B × L, 100).
+- Cada certamen aporta 25% antes del factor. Cada control aporta 1/12 del promedio base. Ya no se usa una nota de taller ni los pesos 30/30/25/15.
+- 0,9 ≤ L ≤ 1,1. El factor se ingresa como multiplicador, no como nota sobre 100. No se presume L=1.
+- Aprueba con NF ≥ 54,5 por la corrección explícita del usuario. La captura dice 55; no se aplica redondeo general a las evaluaciones ni al cálculo interno del factor.
+- Global voluntario para cualquier estudiante inscrito dentro del plazo, aunque ya apruebe. No se establece un mínimo de presentación ni una nota mínima propia del Global.
+- Si no se rinde, se conserva NF. Si se rinde, su nota reemplaza el peor certamen en todo caso, incluso si empeora el resultado, y se recalcula NF.
+- Empatar en la peor nota ya no crea ambigüedad: los tres certámenes tienen el mismo peso.
+- Con el resto completo, G mínimo = max(0, 218/L − suma de los otros dos certámenes − NQ). Se recomienda la centésima suficiente; si supera 100 es matemáticamente imposible, aunque exista acceso al Global.
+- No se heredan restricciones de Física ni la excepción del cero sancionado de Álgebra, que no aparecen en estas capturas.
+
+**Laboratorio y discrepancia del encabezado:** `image(2).png` está rotulada “Laboratorio MAT-061 — Segundo Semestre de 2026”. Esa página da NL = 0,30 × asistencia (%) + 0,35 × control de laboratorio 1 + 0,35 × control de laboratorio 2. Si NL < 55, L = 0,9 + NL/550; si NL ≥ 55, L = 79/90 + NL/450. La fórmula por tramos también aparece en `image(3).png`.
+
+El modo predeterminado solicita el factor oficial L. Para usar el desglose, el estudiante debe elegir explícitamente “Mi paralelo usa la pauta adjunta”, junto a un aviso que identifica el encabezado MAT061. Esta elección confirma la aplicación de la pauta a su paralelo de MAT071; la app no la presupone por semejanza entre ramos. En ese modo, se calcula NL/L automáticamente y se conserva cualquier nota pendiente. Si falta la asistencia final, se muestran escenarios condicionados para asistencia 0–100. NL < 55 reduce el factor, pero no es un bloqueo de aprobación.
+
+**Migración:** los certámenes y el Global anteriores se conservan. Taller (`pt`) y factor antiguo (`eta`) se conservan como datos históricos visibles y exportables, sin participar en la fórmula corregida. No se convierten en controles ni en L. El nuevo campo `labFactor` exige el rango 0,9–1,1. Las notas de los demás ramos no se alteran.
 
 ## Datos incompletos y estados
 
@@ -98,7 +105,7 @@ Fuente: MAT 071 - CÁLCULO EN UNA VARIABLE (SCT-C.A.).pdf, pp.1–3; programa ap
 
 Cada fila fija una nota entre20/40/60/80/100 y busca el menor valor suficiente de otra evaluación pendiente, o del Global. Si faltan más notas, se presenta una hipótesis editable para cada una (inicialmente60) y se enumeran las evaluaciones afectadas. Ese60 no es una regla ni una predicción. Se verifican todas las restricciones, no solo el promedio.
 
-“Probar” copia únicamente hipótesis a los campos simulados. “Deshacer el último caso” recupera la simulación anterior. Las notas reales se conservan. Si la combinación ya aprueba directamente en Física/MAT071, se muestra “Sin Global” y no se inventa una nota de examen.
+“Probar” copia únicamente hipótesis a los campos simulados. “Deshacer el último caso” recupera la simulación anterior. Las notas reales se conservan. Si la combinación ya aprueba directamente en Física, se muestra “Sin Global”. MAT071 conserva la alternativa de Global voluntario aunque ya apruebe; se calcula el mínimo para no perder la aprobación.
 
 ## Casos de referencia derivados manualmente
 
@@ -120,12 +127,14 @@ Cada fila fija una nota entre20/40/60/80/100 y busca el menor valor suficiente d
 | Física: C30,30 y ausente justificado, resto60, α1, G70 | Bloqueado por dos certámenes bajo50 |
 | Programación: C1=50,C2=59.99, resto100 | C54.995, P77.4975, NF54; mínimo propio de C sigue55 |
 | Programación: C1=C2=55, resto54 | C55, P54.5, aprueba |
-| MAT071: C40,50,70; PT70; η1.1 | B55, PS60.5, aprueba |
-| MAT071: C0,70,70; PT70; η1 | PS49; Global18.34 aprueba,18.33 no |
-| MAT071: C50,70,50; PT0; η1 | PS48.5; Global necesario70 si reemplazaC1,74 si reemplazaC3 |
-| MAT071: caso anterior conG72 | NF55.1 o54; resultado condicionado al desempate |
-| MAT071: C1=49.99/50.01, C2=70,C3=50, PT0,η1,G72 | NF55.1/54.003; muestra por qué no se asume monotonía |
-| MAT071: notas completas, η vacío | Sin resultado definitivo ni mínimos inventados |
+| MAT071: C40,50,70; Q50,60,70; L1.1 | B55, NF60.5 |
+| MAT071: C20,40,50; Q40,40,40; L1 | NF37.5; Global88 da54.5,87.99 no alcanza |
+| MAT071: C50,70,50; Q0,0,0; L1; G98 | NF54.5; el empate no cambia el resultado |
+| MAT071: todas las notas60; L1; G0 | Baja de60 a45; el Global es válido y voluntario |
+| MAT071: C50,60 yC3 pendiente; Q60,60 yQ3 pendiente; L1 | Meta uniforme51; C3=40 requiereQ3=84; C3=60 requiereQ3=24 |
+| MAT071: NL0/55/100, pauta confirmada | L0.9/1/1.1, respectivamente |
+| MAT071: toda la base55; asistencia100; L1=0; L2 pendiente | Necesita57.15 en el segundo control de laboratorio |
+| MAT071: notas completas, L vacío | Sin resultado definitivo ni mínimo inventado |
 
 Las pruebas automatizadas reproducen estos resultados y añaden valores vacíos, inválidos, mínimos/máximos, persistencia y separación entre notas e hipótesis. Todos los datos de prueba son ficticios.
 
@@ -137,4 +146,11 @@ Las pruebas automatizadas reproducen estos resultados y añaden valores vacíos,
 - Reglas_FIS111L_08-07-26.pdf: `7107118acafc4a3dfd3cc6a4cea9044b9ac0f706505fa285d6feec8c8337515e`
 - Presentación_de_la_Asignatura__2026_2_.pdf: `a6a4ac457e99eea5cd21e66e8c2b676e94df40c6dc1aa29786b3e5f87f548d8f`
 
-- MAT 071 - CÁLCULO EN UNA VARIABLE (SCT-C.A.).pdf: `841ed3987dbbdc2468019b17d1df9f507d91f77047c52ed77aa2df5a95924a56`
+- Documento anterior de MAT071, reemplazado y excluido del cálculo (MAT 071 - CÁLCULO EN UNA VARIABLE (SCT-C.A.).pdf): `841ed3987dbbdc2468019b17d1df9f507d91f77047c52ed77aa2df5a95924a56`
+
+Capturas actuales (identificación únicamente; no se publican las imágenes originales):
+
+- image.png: `6eeb5804d962dd7e0e480b95a86e971f6590a291d7819e9b065532227f43e011`
+- image(1).png: `1a8ca0ccc502182eb9043445720da903be77f2ade22b2bcfa85a4c1d652a05f9`
+- image(2).png: `b68d8700b8c0b4a7465c4c71926ccca11d98d643b10677b002ffbcb652b111f5`
+- image(3).png: `9ca458867a1c509b5dae22325c4f9d6b1996185d259aa81241e70af4051f5aab`

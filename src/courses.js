@@ -1,4 +1,4 @@
-export const RULE_VERSION = '2026-2.2';
+export const RULE_VERSION = '2026-2.3';
 export const PASS_MARK = '54.5';
 export const PHYSICS_PRESENTATION = '49.5';
 export const COURSES = {
@@ -31,12 +31,12 @@ export const COURSES = {
   },
   calculus1: {
     id: 'calculus1', code: 'MAT071', name: 'Cálculo en una Variable', short: 'Cálculo I', icon: 'curve', color: 'sky',
-    intro: 'Certámenes, taller y tu factor de laboratorio.', recoveryName: 'Global recuperativo',
-    groups: 'C1 30% · C2 30% · C3 25% · taller 15% · factor η',
-    formulas: ['Base = 0,30 × C1 + 0,30 × C2 + 0,25 × C3 + 0,15 × PT', 'PS = Base × η; sin Global: NF = PS', 'Si PS < 54,5: Global recuperativo sustituye la peor nota de certamen con su ponderación original.', 'Con empate entre peores notas de distinto peso, se muestran ambas posibilidades.'],
-    rules: ['Apruebas con PS ≥ 54,5 según la corrección de umbral aplicada a este proyecto.', 'El programa contiene 3 certámenes y una nota final de taller. No detalla el desglose del taller.', 'η es un factor de laboratorio: el documento no define su fórmula ni su rango. Debes ingresar el factor confirmado; no se supone que vale 1.', 'El Global recuperativo se ofrece a quienes no aprueban directamente. No se indica piso de presentación ni mínimo propio del Global.', 'El programa no precisa cómo desempatar la peor nota entre certámenes de ponderaciones distintas.', 'Documento aprobado en 2018. Confirma que estas ponderaciones corresponden a tu paralelo actual.'],
-    sources: [{ title: 'Programa MAT071 · aprobado el 11/12/2018', pages: 'pp. 1–3', file: 'MAT 071 - CÁLCULO EN UNA VARIABLE (SCT-C.A.).pdf' }],
-    defaults: {}
+    intro: 'Tres certámenes, tres controles y tu laboratorio.', recoveryName: 'Global',
+    groups: '3 certámenes · 3 controles · factor de laboratorio · Global voluntario',
+    formulas: ['NC = (C1 + C2 + C3) / 3; NQ = (Q1 + Q2 + Q3) / 3', 'NF = mínimo((0,75 × NC + 0,25 × NQ) × L, 100)', 'El factor de laboratorio L está entre 0,9 y 1,1.', 'Con la pauta de laboratorio confirmada: NL = 0,30 × asistencia (%) + 0,35 × L1 + 0,35 × L2', 'Si NL < 55: L = 0,9 + NL/550; si NL ≥ 55: L = 79/90 + NL/450', 'Global voluntario: reemplaza el peor certamen, incluso si baja tu nota, y se recalcula NF.'],
+    rules: ['Apruebas con NF ≥ 54,5, manteniendo la corrección de umbral solicitada para este proyecto.', 'Los tres certámenes pesan lo mismo: 25% cada uno antes del factor. Los tres controles forman el otro 25%.', 'El laboratorio multiplica el promedio; no es una ponderación adicional. La nota final tiene tope 100.', 'Cualquier estudiante que se inscriba dentro del plazo puede rendir el Global, incluso si ya aprueba. No se indica mínimo de presentación ni nota mínima propia del Global.', 'El Global reemplaza la peor nota en todo caso. Como los certámenes pesan igual, los empates no cambian el resultado.', 'La captura con el desglose del laboratorio está rotulada MAT061. Ingresa tu factor oficial o confirma que esa pauta también corresponde a tu paralelo antes de calcularlo desde notas.', 'Este reglamento reemplaza el programa anterior de 2018: ya no se usa una nota de taller ni los pesos 30/30/25/15.'],
+    sources: [{ title: 'Sistema de evaluación entregado para MAT071', pages: 'sección 7', file: 'Captura image.png · recibida el 27/10/2026' }, { title: 'Controles, certámenes, Global y nota final', pages: 'diapositivas adjuntas', file: 'Capturas image(1).png e image(3).png' }, { title: 'Pauta de laboratorio rotulada MAT061', pages: 'p. 2 · requiere confirmar aplicación a MAT071', file: 'Captura image(2).png' }],
+    defaults: { mat71LabMode: 'factor' }
   },
   programming: {
     id: 'programming', code: 'PROGRAMACIÓN', name: 'Introducción a la Programación', short: 'Programación', icon: 'code', color: 'peach',
@@ -55,9 +55,10 @@ const group = (id, title, subtitle, inputs) => ({ id, title, subtitle, fields: i
 export function count(v) { const n = Number(v); return Number.isInteger(n) && n >= 1 && n <= 30 ? n : 0; }
 export function modelFor(id, config = {}, overrideCount) {
   const c = { ...COURSES[id].defaults, ...config };
-  if (id === 'calculus1') return [group('certs', 'Certámenes', 'C1 y C2: 30% cada uno · C3: 25%', [{ id: 'c1', label: 'Certamen 1', kind: 'grade', weight: .3 }, { id: 'c2', label: 'Certamen 2', kind: 'grade', weight: .3 }, { id: 'c3', label: 'Certamen 3', kind: 'grade', weight: .25 }]), group('workshop', 'Taller', '15% · usa la nota final oficial del taller', single('pt', 'Nota final de taller', .15)), group('factor', 'Laboratorio · factor η', 'Ingresa el factor confirmado (por ejemplo, 1). No es una nota sobre 100.', single('eta', 'Factor de laboratorio η', null, 'factor'))];
+
   const cs = group('certs', 'Certámenes', id === 'physics' ? '60% del promedio antes de asistencia · mínimo 50 en cada uno para aprobación directa' : id === 'programming' ? '50% del ramo · su promedio debe llegar a 55' : '75% de la base · 25% cada uno', fields('c', id === 'programming' ? 2 : 3, 'Certamen', id === 'physics' ? .6 : id === 'programming' ? .5 : .75));
   if (id === 'calculus') return [cs, group('controls', 'Controles', '25% del ramo · promedio simple', c.controlMode === 'average' ? single('pq', 'Promedio FINAL oficial de controles', .25) : fields('q', overrideCount || (c.controlCount === '6' ? 6 : 8), 'Control', .25))];
+  if (id === 'calculus1') return [cs, group('controls', 'Controles', '25% de la base · promedio de los tres controles', fields('q', 3, 'Control', .25)), c.mat71LabMode === 'confirmedDetails' ? group('lab', 'Laboratorio', 'Pauta confirmada: dos controles y asistencia determinan el factor L', [...fields('l', 2, 'Control de laboratorio'), ...single('attendance', 'Asistencia final al laboratorio (%)', null, 'attendance')]) : group('factor', 'Laboratorio', 'Factor final entre 0,9 y 1,1. No es una nota sobre 100.', single('labFactor', 'Factor oficial de laboratorio L', null, 'factor'))];
   if (id === 'algebra') return [cs, group('controls', 'Controles de ayudantía', '25% de la base · cuentan los tres', fields('q', 3, 'Control', .25)), group('lab', 'Laboratorio', 'Determina el factor ω, entre 0,9 y 1,1', [...fields('l', 2, 'Control de laboratorio'), ...single('attendance', 'Asistencia final al laboratorio (%)', null, 'attendance')])];
   if (id === 'programming') return [cs, group('controls', 'Controles de laboratorio', '20% · un control por cada una de las 8 unidades', fields('q', 8, 'Control', .2)), group('tasks', 'Tareas', '20% · ingresa la nota final de cada tarea', fields('t', 4, 'Tarea', .2)), group('ef', 'Evaluaciones formativas', '5% · promedio aritmético', count(c.efCount) ? fields('ef', count(c.efCount), 'Formativa', .05) : single('efMean', 'Promedio FINAL oficial de formativas', .05)), group('eca', 'Ejercicios autocorregidos', '5% · usa las notas consolidadas publicadas en AULA', count(c.ecaCount) ? fields('eca', count(c.ecaCount), 'Evaluación ECA', .05) : single('ecaMean', 'Promedio FINAL oficial de ECA', .05))];
   const separate = c.labMode === 'details' && c.labLayout === 'separate';

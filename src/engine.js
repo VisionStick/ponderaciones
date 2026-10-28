@@ -1,4 +1,4 @@
-import { q, mean, sum, min, max, parseGrade, parseFactor, minimumHundredth } from './rational.js';
+import { q, mean, sum, min, max, parseGrade, parseLabFactor, minimumHundredth } from './rational.js';
 import { COURSES, modelFor, PASS_MARK, PHYSICS_PRESENTATION } from './courses.js';
 
 const groupValues = (groups, name, values) => (groups.find(g => g.id === name)?.fields || []).filter(f => f.kind === 'grade').map(f => values[f.id]);
@@ -12,31 +12,30 @@ function labValue(config, groups, values) {
   const combined = config.labLayout === 'separate' ? [...groupValues(groups, 'reports', values), ...groupValues(groups, 'labControls', values)] : groupValues(groups, 'complete', values);
   return simple.length && combined.length ? physicsLab(simple, combined) : q(0);
 }
-function evaluateMat071(config, v, recovery, replacementId) {
-  if (!v.eta || v.eta.eq(0)) return { pending: true, reason: 'factor', pass: false, direct: false, eligible: false, semester: null, final: null, details: {} };
-  const weights = ['0.30', '0.30', '0.25'];
-  const cs = [v.c1, v.c2, v.c3];
-  const base = sum(cs.map((x, i) => x.mul(weights[i]))).add(v.pt.mul('0.15'));
-  const original = base.mul(v.eta);
-  let final = original, replaced = null, alternatives = [];
-  const eligible = original.lt(PASS_MARK);
-  if (recovery !== null && eligible) {
-    const lowest = min(...cs);
-    const candidates = cs.map((x, i) => x.eq(lowest) ? i : null).filter(i => i !== null);
-    alternatives = candidates.map(i => ({ id: 'c' + (i + 1), final: base.add(q(recovery).sub(lowest).mul(weights[i])).mul(v.eta) }));
-    const selected = alternatives.find(x => x.id === replacementId);
-    final = selected ? selected.final : min(...alternatives.map(x => x.final));
-    replaced = selected?.id || (alternatives.length === 1 ? alternatives[0].id : null);
+function evaluateMat071(config, v, recovery) {
+  const calculated = config.mat71LabMode === 'confirmedDetails';
+  const nl = calculated ? v.attendance.mul('0.30').add(v.l1.mul('0.35')).add(v.l2.mul('0.35')) : null;
+  const factor = calculated ? omega(nl) : v.labFactor;
+  if (!factor || factor.lt('0.9') || factor.cmp('1.1') > 0) return { pending: true, reason: 'factor', pass: false, direct: false, eligible: true, semester: null, final: null, details: {} };
+  const cs = [v.c1, v.c2, v.c3], nc = mean(cs), nq = mean([v.q1, v.q2, v.q3]);
+  const base = nc.mul('0.75').add(nq.mul('0.25'));
+  const semester = min(base.mul(factor), 100);
+  let replaced = null;
+  if (recovery !== null) {
+    const lowest = min(...cs), at = cs.findIndex(x => x.eq(lowest));
+    cs[at] = q(recovery); replaced = 'c' + (at + 1);
   }
-  return { semester: original, final, alternatives, pass: final.gte(PASS_MARK), direct: recovery === null && original.gte(PASS_MARK), eligible, replaced, ignoredRecovery: recovery !== null && !eligible, reason: final.gte(PASS_MARK) ? 'passed' : 'grade', details: { base, eta: v.eta, pt: v.pt }, requirements: [{ label: 'Nota final ≥ 54,5', value: final, met: final.gte(PASS_MARK) }] };
+  const effectiveNc = mean(cs);
+  const final = min(effectiveNc.mul('0.75').add(nq.mul('0.25')).mul(factor), 100);
+  return { semester, final, pass: final.gte(PASS_MARK), direct: recovery === null && final.gte(PASS_MARK), eligible: true, replaced, reason: final.gte(PASS_MARK) ? 'passed' : 'grade', details: { base, nc, nq, nl, factor, ...(recovery !== null ? { effectiveNc } : {}) }, requirements: [{ label: 'Nota final ≥ 54,5', value: final, met: final.gte(PASS_MARK) }] };
 }
 
 // Complete, exact evaluation. Caller explicitly supplies pending-grade scenarios.
-export function evaluate(id, config, values, { recovery = null, alpha = 1, controlCount, replacementId } = {}) {
+export function evaluate(id, config, values, { recovery = null, alpha = 1, controlCount } = {}) {
   const groups = modelFor(id, config, controlCount);
   const v = Object.fromEntries(Object.entries(values).map(([k, x]) => [k, x === null ? null : q(x)]));
   const cs = groupValues(groups, 'certs', v);
-  if (id === 'calculus1') return evaluateMat071(config, v, recovery, replacementId);
+  if (id === 'calculus1') return evaluateMat071(config, v, recovery);
   let replaced = null;
   if (id === 'physics' && config.justified && config.justified !== 'none') {
     if (recovery === null) return { pending: true, reason: 'justified', pass: false, direct: false, semester: null, final: null, eligible: false, details: {} };
@@ -90,7 +89,7 @@ function context(id, state, scenario) {
     const cell = state.grades?.[field.id] || {};
     const sim = scenario && String(cell.sim ?? '').trim() !== '';
     const raw = sim ? cell.sim : cell.real;
-    const p = field.kind === 'factor' ? parseFactor(raw) : parseGrade(raw);
+    const p = field.kind === 'factor' ? parseLabFactor(raw) : parseGrade(raw);
     values[field.id] = p.value;
     if (p.error) errors.push({ id: field.id, label: field.label, error: p.error });
     if (sim) simulated.push(field.id);
@@ -101,7 +100,7 @@ function context(id, state, scenario) {
     issues.push('MAT070 menciona 6 y 8 controles. Confirma el total en AULA o usa el promedio final oficial.');
     variants = [{ controlCount: 6 }, { controlCount: 8 }];
   }
-  if (id === 'algebra' && values.attendance === null) {
+  if ((id === 'algebra' || (id === 'calculus1' && config.mat71LabMode === 'confirmedDetails')) && values.attendance === null) {
     issues.push('Falta la asistencia final de laboratorio. Los resultados varían con ese porcentaje.');
     variants = variants.flatMap(v => [{ ...v, attendance: q(0) }, { ...v, attendance: q(100) }]);
   }
@@ -119,15 +118,7 @@ function context(id, state, scenario) {
     if (config.isCount === '0' || config.inCount === 'unknown' || config.ciCount === 'unknown') issues.push('Indica cuántos informes simples, informes completos y controles de laboratorio habrá en total. Así las notas que faltan no desaparecen del promedio.');
     if (config.inCount === '0' && config.ciCount === '0') issues.push('El promedio de IN + CI necesita al menos una evaluación. Revisa las cantidades del laboratorio.');
   }
-  if (id === 'calculus1') {
-    if (values.eta === null) issues.push('Falta el factor de laboratorio η. El programa no explica su fórmula; ingresa el factor confirmado o simúlalo.');
-    const certs = ['c1', 'c2', 'c3'].map(k => values[k]);
-    if (certs.every(x => x !== null)) {
-      const lowest = min(...certs); const candidates = certs.map((x,i) => x.eq(lowest) ? 'c' + (i+1) : null).filter(Boolean);
-      variants = candidates.map(replacementId => ({ replacementId }));
-      if (values.g !== null && candidates.includes('c3') && candidates.length > 1 && !values.g.eq(lowest)) issues.push('Hay empate en la peor nota con ponderaciones distintas. El resultado del Global depende de cuál certamen se reemplace; se muestran ambas posibilidades.');
-    }
-  }
+  if (id === 'calculus1' && config.mat71LabMode !== 'confirmedDetails' && values.labFactor === null) issues.push('Ingresa el factor oficial de laboratorio L (entre 0,9 y 1,1), o calcula el factor con la pauta de tu paralelo confirmada.');
   const gradeFields = allFields.filter(f => f.kind === 'grade' && !(id === 'physics' && config.justified === f.id));
   const modelIncomplete = id === 'physics' && config.labMode === 'details' && config.labLayout === 'separate' && (config.isCount === '0' || config.inCount === 'unknown' || config.ciCount === 'unknown' || (config.inCount === '0' && config.ciCount === '0'));
   return { config, groups, allFields, gradeFields, values, errors, simulated, issues, variants, modelIncomplete };
@@ -153,11 +144,8 @@ export function analyze(id, state, scenario = false) {
   const highs = variants.map(v => atCurrent(v, q(100), q(100)));
   const regularComplete = pending.length === 0;
   const exact = regularComplete && c.issues.length === 0 && (!justified || hasG) ? atCurrent(variants[0], q(0), g) : null;
-  const exactBefore = regularComplete && (c.issues.length === 0 || (id === 'calculus1' && values.eta !== null)) && !justified ? compute(variants[0], q(0), null) : null;
-  const nonMonotone = id === 'calculus1' && hasG && pending.length > 0;
-  const missingFactor = id === 'calculus1' && values.eta === null;
-  if (nonMonotone) c.issues.push('Con un Global ya ingresado, completa o simula las notas pendientes de MAT071. El reemplazo puede cambiar de ponderación: una meta única sería engañosa.');
-  if (id === 'calculus1' && hasG && exactBefore?.pass) c.errors.push({ id: 'g', label: 'Global recuperativo', error: 'Ya apruebas directamente. El programa reserva este Global a quienes no aprueban con su PS.' });
+  const exactBefore = regularComplete && c.issues.length === 0 && !justified ? compute(variants[0], q(0), null) : null;
+  const missingFactor = id === 'calculus1' && config.mat71LabMode !== 'confirmedDetails' && values.labFactor === null;
   const directPossible = !justified && variants.some(v => { const e = compute(v, q(100), hasG ? g : null); return hasG ? e.pass : e.direct; });
   const recoverPossible = !hasG && canTryRecovery && variants.some(v => compute(v, q(100), q(100)).pass);
   const possible = highs.some(x => x.pass) || directPossible || recoverPossible;
@@ -173,11 +161,11 @@ export function analyze(id, state, scenario = false) {
   else if (!directPossible && recoverPossible) status = 'recovery';
 
   // Uniform remaining-grade target: attendance is held to each explicit context variant.
-  const uniform = pending.length && !justified && !nonMonotone && !missingFactor && !c.modelIncomplete ? variants.map(v => minimumHundredth(x => compute(v, x, hasG ? g : null).pass)) : [];
+  const uniform = pending.length && !justified && !missingFactor && !c.modelIncomplete ? variants.map(v => minimumHundredth(x => compute(v, x, hasG ? g : null).pass)) : [];
   const finiteTargets = uniform.filter(x => x !== null);
   const target = finiteTargets.length ? { low: min(...finiteTargets), high: max(...finiteTargets), partial: finiteTargets.length !== uniform.length, count: pending.length, field: pending.length === 1 ? pending[0].label : null } : null;
   // Never present an unconditional Global minimum while regular grades are still pending.
-  const globalTargets = regularComplete && canTryRecovery && !missingFactor && !c.modelIncomplete && !(id === 'calculus1' && exactBefore?.pass) ? variants.map(v => minimumHundredth(x => compute(v, q(0), x).pass)) : [];
+  const globalTargets = regularComplete && canTryRecovery && !missingFactor && !c.modelIncomplete ? variants.map(v => minimumHundredth(x => compute(v, q(0), x).pass)) : [];
   const finiteGlobal = globalTargets.filter(x => x !== null);
   const recoveryTarget = finiteGlobal.length ? { low: min(...finiteGlobal), high: max(...finiteGlobal), partial: finiteGlobal.length !== globalTargets.length } : null;
   let weightKnown = null, pointsKnown = null;
@@ -197,19 +185,19 @@ export function analyze(id, state, scenario = false) {
   }
   const semesterBounds = [...lows, ...highs].map(x => x.semester).filter(x => x !== null);
   const finalBounds = [...lows, ...highs].map(x => x.final).filter(x => x !== null);
-  const range = semesterBounds.length && !nonMonotone && !missingFactor && !c.modelIncomplete ? { low: min(...semesterBounds), high: max(...semesterBounds) } : null;
-  const finalRange = finalBounds.length && !nonMonotone && !missingFactor && !c.modelIncomplete ? { low: min(...finalBounds), high: max(...finalBounds) } : null;
+  const range = semesterBounds.length && !missingFactor && !c.modelIncomplete ? { low: min(...semesterBounds), high: max(...semesterBounds) } : null;
+  const finalRange = finalBounds.length && !missingFactor && !c.modelIncomplete ? { low: min(...finalBounds), high: max(...finalBounds) } : null;
   const dropped = {};
   if (id === 'physics') for (const [name, take] of [['controls', 4], ['tasks', 3]]) {
     const fs = c.groups.find(g => g.id === name).fields;
     if (fs.every(f => values[f.id] !== null)) dropped[name] = [...fs].sort((a, b) => values[b.id].cmp(values[a.id])).slice(take).map(f => f.id);
   }
-  return { ...c, id, scenario, knownCount: known.length, totalCount: c.gradeFields.length, pending, observed, hasG, justified, exact, exactBefore, status, possible, guaranteed, directPossible, recoverPossible, target, recoveryTarget, range, finalRange, weightKnown, pointsKnown, dropped, regularComplete, nonMonotone, missingFactor, recoveryConditional: id === 'programming' && config.recoveryAccess === 'unknown' && (!hasG || c.simulated.includes('g')) };
+  return { ...c, id, scenario, knownCount: known.length, totalCount: c.gradeFields.length, pending, observed, hasG, justified, exact, exactBefore, status, possible, guaranteed, directPossible, recoverPossible, target, recoveryTarget, range, finalRange, weightKnown, pointsKnown, dropped, regularComplete, missingFactor, recoveryConditional: id === 'programming' && config.recoveryAccess === 'unknown' && (!hasG || c.simulated.includes('g')) };
 }
 
 export function messageFor(a) {
   const name = COURSES[a.id].recoveryName;
-  const isVoluntary = a.id === 'calculus' || a.id === 'algebra';
+  const isVoluntary = ['calculus', 'algebra', 'calculus1'].includes(a.id);
   const suffix = isVoluntary && !a.hasG ? ' Si rindes el Global voluntario, tu nota podría bajar.' : '';
   const texts = {
     empty: ['Tu próximo paso empieza aquí.', 'Ingresa las notas que ya tienes. Las demás pueden esperar; un espacio vacío nunca cuenta como cero.'],

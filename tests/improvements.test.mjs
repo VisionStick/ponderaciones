@@ -61,42 +61,9 @@ test('Laboratorio: cantidades desconocidas bloquean metas y no presentan medias 
 test('Laboratorio: IN y CI ambos0 es configuración incompleta, no división por cero',()=>{
   const config={...separated,inCount:'0',ciCount:'0'};const a=analyze('physics',stateFor('physics',{},config));assert.equal(a.modelIncomplete,true);assert.equal(labProgress(a).confirmed,false);
 });
-test('MAT071: pesos30/30/25/15 con η1.1 dan60.5',()=>{
-  const e=evaluate('calculus1',{}, {c1:40,c2:50,c3:70,pt:70,eta:'1.1'});eq(e.details.base,55);eq(e.final,'60.5');assert.ok(e.pass);
-});
-test('MAT071: falta η no se sustituye por1 ni produce metas inventadas',()=>{
-  const a=analyze('calculus1',stateFor('calculus1',{c1:100,c2:100,c3:100,pt:100}));assert.equal(a.status,'conditional');assert.equal(a.exact,null);assert.equal(a.range,null);assert.equal(a.recoveryTarget,null);
-});
-test('MAT071: una sola nota y η1 deja meta uniforme54.29',()=>{
-  const a=analyze('calculus1',stateFor('calculus1',{c1:55,eta:1}));eq(a.target.high,'54.29');assert.equal(a.weightKnown,.3);
-});
-test('MAT071: C1=0 C2=C3=PT=70 da49; Global18.34 aprueba y18.33 no',()=>{
-  const v={c1:0,c2:70,c3:70,pt:70,eta:1};const a=analyze('calculus1',stateFor('calculus1',v));eq(a.exact.semester,49);eq(a.recoveryTarget.low,'18.34');assert.ok(evaluate('calculus1',{},v,{recovery:q('18.34')}).pass);assert.equal(evaluate('calculus1',{},v,{recovery:q('18.33')}).pass,false);
-});
-test('MAT071: empate de pesos distintos da Global70–74',()=>{
-  const v={c1:50,c2:70,c3:50,pt:0,eta:1};const a=analyze('calculus1',stateFor('calculus1',v));eq(a.exact.semester,'48.5');eq(a.recoveryTarget.low,70);eq(a.recoveryTarget.high,74);
-  const simulated=analyze('calculus1',stateFor('calculus1',{...v,g:72}));assert.equal(simulated.status,'conditional');eq(simulated.finalRange.low,54);eq(simulated.finalRange.high,'55.1');
-});
-test('MAT071: empate C1/C2 de igual peso no exige falsa confirmación',()=>{
-  const a=analyze('calculus1',stateFor('calculus1',{c1:50,c2:50,c3:70,pt:0,eta:1,g:80}));assert.equal(a.status,'approved');eq(a.exact.final,'56.5');
-});
-test('MAT071: caso no monótono conserva cada reemplazo correcto',()=>{
-  const v={c1:'49.99',c2:70,c3:50,pt:0,eta:1};eq(evaluate('calculus1',{},v,{recovery:q(72)}).final,'55.1');v.c1='50.01';eq(evaluate('calculus1',{},v,{recovery:q(72)}).final,'54.003');assert.equal(evaluate('calculus1',{},v,{recovery:q(72)}).pass,false);
-});
-test('MAT071: no usa búsqueda binaria con Global fijo y notas pendientes',()=>{
-  const s=stateFor('calculus1',{c2:70,c3:50,pt:0,eta:1,g:72});const a=analyze('calculus1',s);assert.equal(a.status,'conditional');assert.equal(a.target,null);assert.equal(a.range,null);assert.equal(buildCases('calculus1',s).rows.length,0);
-});
-test('MAT071: aprobados no acceden a este recuperativo',()=>{
-  const a=analyze('calculus1',stateFor('calculus1',{c1:60,c2:60,c3:60,pt:60,eta:1}));assert.equal(a.status,'approved');assert.equal(a.recoveryTarget,null);
-  const b=analyze('calculus1',stateFor('calculus1',{c1:60,c2:60,c3:60,pt:60,eta:1,g:10}));assert.equal(b.status,'invalid');
-});
 test('Casos MAT070: C50/60, C3=20/40/60/80/100 requiere PQ88/68/48/28/8',()=>{
   const s=stateFor('calculus',{c1:50,c2:60},calc);const original=JSON.stringify(s);const p=buildCases('calculus',s);assert.equal(p.first.id,'c3');assert.equal(p.second.id,'pq');assert.deepEqual(p.rows.map(r=>Number(r.required)),[88,68,48,28,8]);assert.equal(JSON.stringify(s),original);
   for(const row of p.rows)assert.equal((50+60+row.fixed+Number(row.required))/4,54.5);
-});
-test('Casos MAT071: pesos desiguales producen alternativas verificables',()=>{
-  const p=buildCases('calculus1',stateFor('calculus1',{c1:50,c2:60,eta:1}));assert.deepEqual(p.rows.map(r=>r.required===null?null:Number(r.required)),[null,76.67,43.34,10,0]);
-  for(const r of p.rows.filter(r=>r.possible))assert.ok(33+.25*r.fixed+.15*Number(r.required)>=54.5);
 });
 test('Casos Física: con un certamen bajo50, sugerir otro bajo50 nunca aprueba ni conGlobal100',()=>{
   const v=full('physics',100,phys);v.c1=49;delete v.c2;const p=buildCases('physics',stateFor('physics',v,phys),false,{route:'recovery'});assert.equal(p.rows[0].possible,false);assert.equal(p.rows[1].possible,false);assert.equal(p.rows[2].possible,true);eq(p.rows[2].required,50);
@@ -121,7 +88,7 @@ test('Respaldo permite factor mayor100 sin tratarlo como nota; no admite factor0
   const s=blankState();s.courses.calculus1.grades.eta={real:'101',sim:'1'};assert.ok(validateState(s));s.courses.calculus1.grades.eta.real='0';assert.throws(()=>validateState(s),/nota inválida/);
 });
 
-for (const id of ['calculus1','physics']) test(`${id}: los casos no inventan un Global0 cuando ya apruebas directamente`,()=>{
+for (const id of ['physics']) test(`${id}: los casos no inventan un Global0 cuando ya apruebas directamente`,()=>{
   const config=id==='physics'?phys:cfg(id);const v=full(id,60,config);delete v.c3;
   const s=stateFor(id,v,config);const p=buildCases(id,s,false,{route:'recovery'});
   const row=p.rows.find(r=>r.fixed===100);assert.equal(row.noRecoveryNeeded,true);assert.equal(row.hypotheses.g,undefined);

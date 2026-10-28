@@ -13,5 +13,6 @@ This repository is a static Spanish-language academic calculator. Preserve per-c
 - Read `docs/agregar-asignaturas.md` before adding courses or migrating saved state.
 
 - User corrections are explicitly attributed in the academic contract; do not silently revert54.5/49.5 or apply them to separate minimum requirements.
-- MAT071 has unequal certamen weights. Preserve tied-replacement alternatives and the non-monotone Global regression test.
+- MAT071 now uses three equally weighted certámenes and three controles (75%/25%), a bounded lab factor and a voluntary Global. The 2018 program was explicitly superseded by the user on 2026-10-27. Never reapply its old weights or eligibility.
+- One new lab screenshot is labeled MAT061: use its grade breakdown only in the explicitly confirmed mode; otherwise use MAT071’s official L factor.
 - Keep migrations explicit and preserve both real and simulated notes, including legacy combined Physics lab inputs.

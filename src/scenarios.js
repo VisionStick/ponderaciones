@@ -8,7 +8,7 @@ export function buildCases(id, state, scenario = false, options = {}) {
   const route = options.route || (a.status === 'recovery' || a.justified ? 'recovery' : 'direct');
   const fields = a.pending;
   if (!fields.length && !a.errors.length && !a.issues.length) return { rows: [], fields, route, reason: 'Ya tienes todas las notas de este escenario. Puedes cambiar una hipótesis en ¿Y si saco…? o deshacer el último caso.' };
-  if (a.errors.length || a.issues.length || a.nonMonotone || !fields.length || a.status === 'impossible') return { rows: [], fields, route, reason: a.status === 'impossible' ? 'Las restricciones actuales impiden aprobar. Revisa el motivo de arriba.' : 'Completa o confirma los datos indicados para comparar casos sin inventar condiciones.' };
+  if (a.errors.length || a.issues.length || !fields.length || a.status === 'impossible') return { rows: [], fields, route, reason: a.status === 'impossible' ? 'Las restricciones actuales impiden aprobar. Revisa el motivo de arriba.' : 'Completa o confirma los datos indicados para comparar casos sin inventar condiciones.' };
   if (route === 'recovery' && id === 'programming' && a.config.recoveryAccess === 'no') return { rows: [], fields, route, reason: 'Marcaste que no tienes acceso al recuperativo.' };
   if (route === 'direct' && a.justified) return { rows: [], fields, route, reason: 'Tu ausencia justificada requiere rendir Global.' };
   const first = fields.find(f => f.id === options.first) || fields[0];
@@ -21,7 +21,7 @@ export function buildCases(id, state, scenario = false, options = {}) {
   const rows = [20, 40, 60, 80, 100].map(fixed => {
     const assumptions = Object.fromEntries(rest.map(f => [f.id, restValue]));
     assumptions[first.id] = q(fixed);
-    const withoutRecovery = route === 'recovery' && ['physics', 'calculus1'].includes(id) && !a.justified
+    const withoutRecovery = route === 'recovery' && id === 'physics' && !a.justified
       ? a.variants.map(variant => evaluate(id, a.config, { ...a.values, ...assumptions }, { ...variant, recovery: null })) : [];
     if (withoutRecovery.length && withoutRecovery.every(e => e.direct)) {
       return { fixed, required: null, possible: true, noRecoveryNeeded: true, direct: true, final: withoutRecovery[0].final,

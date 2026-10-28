@@ -56,17 +56,18 @@ El workflow de comprobaciones ejecuta las verificaciones de sintaxis, las prueba
 | `src/app.js` | Interfaz y comportamiento |
 | `styles.css` | Diseño responsive y accesibilidad visual |
 | `tests/academic.test.mjs` | Casos numéricos y restricciones por ramo |
-| `tests/improvements.test.mjs` | Correcciones, MAT071, casos y migración de datos |
+| `tests/improvements.test.mjs` | Umbrales, Física, casos y conservación de datos |
+| `tests/mat071-current.test.mjs` | Reglamento corregido de MAT071, Global, factores y migración |
 | `tests/data.test.mjs` | Valores inválidos, precisión y respaldos |
 | `docs/reglas-2026-2.md` | Contrato académico y decisiones documentadas |
 | `docs/agregar-asignaturas.md` | Cómo extender o actualizar el sitio |
 
 ## Precisión y límites conocidos
 
-- Reglas `2026-2.2`: aprobación final desde54,5 y presentación al Global de Física desde49,5, según corrección del usuario. Dos certámenes de Física bajo50 bloquean aprobación y Global. Los mínimos específicos de laboratorio, certámenes y Global se verifican por separado.
+- Reglas `2026-2.3`: aprobación final desde54,5 y presentación al Global de Física desde49,5, según corrección del usuario. Dos certámenes de Física bajo50 bloquean aprobación y Global. Los mínimos específicos de laboratorio, certámenes y Global se verifican por separado.
 - Las decisiones comparan fracciones exactas:54,499999 no se convierte en54,5 por redondeo visual.
 - El mínimo sugerido se eleva a centésimas y se muestra también el entero suficiente. No se inventa redondeo administrativo de la universidad.
-- MAT071 usa el programa adjunto de2018. El factorη requiere un valor confirmado o simulado porque su fórmula no aparece en ese documento. Los empates entre peores certámenes con pesos distintos se muestran como alternativas; no se inventa cuál se reemplaza.
+- MAT071 usa las capturas corregidas entregadas el 27/10/2026: tres certámenes (75%), tres controles (25%), factor L entre 0,9 y 1,1, tope 100 y Global voluntario que siempre reemplaza el peor certamen. La pauta detallada de laboratorio menciona MAT061; se usa solo al confirmar que corresponde al paralelo, o se ingresa directamente el factor oficial.
 - MAT070 menciona **6 y 8 controles** en secciones diferentes. El estudiante confirma el total en AULA o ingresa el promedio final oficial; hasta entonces el resultado es condicionado.
 - Física presenta factores de asistencia de cátedra y laboratorio sin explicar su combinación. Se usa el factor efectivo confirmado, o α=1 cuando las tres asistencias alcanzan el 80%. Los factores no se multiplican entre sí automáticamente.
 - FIS111L no especifica cantidades de experiencias; se confirman los totales de IS, IN y CI antes de calcular un mínimo final. EF/ECA de Programación tampoco detallan todas sus notas. Se pueden configurar cantidades previstas o ingresar promedios **finales** oficiales. Un promedio provisional se debe simular, no registrar como final.
@@ -74,9 +75,11 @@ El workflow de comprobaciones ejecuta las verificaciones de sintaxis, las prueba
 - En Física se modela una ausencia justificada a certamen. El reglamento no define inequívocamente múltiples ausencias; esos casos requieren coordinación.
 - Las situaciones excepcionales, sanciones y autorizaciones institucionales no se inventan ni sustituyen mediante el cálculo.
 
-Las notas de la versión2026-2.1 se migran explícitamente, conservando las notas reales, las simuladas y el formato anterior de laboratorio. Se avisa al usuario al cargar sus datos. Los ejemplos también conservan sus ajustes simulados al recargar, separados de la configuración real.
+Las notas de las versiones 2026-2.1 y 2026-2.2 se migran explícitamente, conservando las notas reales, las simuladas y el formato anterior de laboratorio. Taller y η del programa antiguo de MAT071 quedan como datos históricos y no participan en el nuevo cálculo. Se avisa al usuario al cargar sus datos. Los ejemplos también conservan sus ajustes simulados al recargar, separados de la configuración real.
 
 ## Privacidad
+
+La interfaz no contiene enlaces al repositorio. Esto elimina el acceso directo desde el sitio; no modifica la visibilidad pública del repositorio ni añade control de acceso a GitHub Pages.
 
 Sin cuentas, analítica, cookies de seguimiento ni llamadas a servicios externos desde la aplicación. Las notas se guardan en `localStorage`. Los respaldos JSON incluyen notas reales, simuladas y configuración; el usuario elige cuándo descargarlos o importarlos. No se suben al repositorio ni al servidor.
 

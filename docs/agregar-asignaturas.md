@@ -12,7 +12,7 @@
 
 ## Versiones y cambios de reglas
 
-El identificador de regla actual es `2026-2.2`. Un cambio académico que altera resultados debe cambiar `RULE_VERSION` y documentarse. La importación admite la versión actual y una migración explícita de2026-2.1: conserva notas e hipótesis, mantiene el laboratorio combinado anterior y agrega MAT071 vacío. Al cargar desde almacenamiento se avisa del cambio de reglas. Las demás versiones se rechazan. Agregar una migración explícita con pruebas si se desea conservar datos entre versiones. Mantener los identificadores de evaluaciones estables dentro de una versión.
+El identificador de regla actual es `2026-2.3`. Un cambio académico que altera resultados debe cambiar `RULE_VERSION` y documentarse. La importación admite la versión actual y migraciones explícitas desde 2026-2.1 y 2026-2.2: conserva notas e hipótesis, mantiene el laboratorio combinado anterior de Física y conserva taller/η de MAT071 como datos históricos, sin reinterpretarlos como controles/factor L. Al cargar desde almacenamiento se avisa del cambio de reglas. Las demás versiones se rechazan. Agregar una migración explícita con pruebas si se desea conservar datos entre versiones. Mantener los identificadores de evaluaciones estables dentro de una versión.
 
 Los cambios de diseño o mensajes que no modifican reglas pueden conservar la versión académica. Nunca almacenar credenciales ni notas personales de usuarios en el código, fixtures, issues o capturas del proyecto.
 
@@ -26,6 +26,6 @@ Los cambios de diseño o mensajes que no modifican reglas pueden conservar la ve
 
 ## Combinaciones y factores
 
-`src/scenarios.js` genera casos sin escribir notas reales. Cada hipótesis adicional debe ser visible; toda fila ofrecida debe volver a pasar las reglas del motor. Los factores positivos comoη usan un validador propio: no son notas0–100. No usar1 como valor implícito.
+`src/scenarios.js` genera casos sin escribir notas reales. Cada hipótesis adicional debe ser visible; toda fila ofrecida debe volver a pasar las reglas del motor. El factor L de MAT071 usa un validador propio de 0,9 a 1,1: no es una nota 0–100. No usar 1 como valor implícito. El validador positivo sin tope se conserva únicamente para el campo η histórico.
 
-MAT071 es un contraejemplo concreto a la monotonía: conGlobal fijo, cambiar la menor nota puede cambiar el peso sustituido. Hay una prueba que cruza esa discontinuidad; conservarla al extender el buscador.
+El programa anterior de MAT071 fue reemplazado por el usuario. La versión actual tiene certámenes de igual peso, por lo que ya no tiene la discontinuidad por cambio de ponderación del reemplazo. Las pruebas deben seguir las fuentes vigentes; conservar el historial de reglas en Git, sin dejar fixtures de fuentes descartadas como expectativas actuales. La pauta de laboratorio con encabezado MAT061 requiere elección explícita del modo confirmado.
