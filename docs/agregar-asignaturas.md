@@ -33,3 +33,7 @@ El programa anterior de MAT071 fue reemplazado por el usuario. La versión actua
 ## Relacionar un ramo con el directorio
 
 Registrar una asignatura en el directorio no crea reglas de cálculo. En el editor, selecciona la calculadora existente en la ficha de la asignatura; registra los profesores, vínculos de docencia por semestre y horarios una sola vez. Los datos se incorporan únicamente a `data/directory.json`. No inferir que todos los profesores del departamento imparten todos sus ramos. Véase `docs/directorio.md`.
+
+## Tablas de recuperación
+
+Antes de buscar un mínimo de Global o recuperativo, evaluar cada combinación sin recuperación. Si ya aprueba, mostrar que no lo necesita y omitir G de las hipótesis. No confundir el mínimo para conservar una aprobación al rendir un examen voluntario con la necesidad de rendirlo. Al aplicar un caso desde notas reales, usar `applyCaseToCourse` para no reactivar hipótesis o configuraciones antiguas. Mantener las pruebas de `tests/recovery-cases.test.mjs`, incluidos reemplazos del peor certamen, aprobación directa y justificaciones de Física.

@@ -105,7 +105,9 @@ El modo predeterminado solicita el factor oficial L. Para usar el desglose, el e
 
 Cada fila fija una nota entre20/40/60/80/100 y busca el menor valor suficiente de otra evaluación pendiente, o del Global. Si faltan más notas, se presenta una hipótesis editable para cada una (inicialmente60) y se enumeran las evaluaciones afectadas. Ese60 no es una regla ni una predicción. Se verifican todas las restricciones, no solo el promedio.
 
-“Probar” copia únicamente hipótesis a los campos simulados. “Deshacer el último caso” recupera la simulación anterior. Las notas reales se conservan. Si la combinación ya aprueba directamente en Física, se muestra “Sin Global”. MAT071 conserva la alternativa de Global voluntario aunque ya apruebe; se calcula el mínimo para no perder la aprobación.
+Desde la corrección del 15/11/2026, cada fila de la vía de recuperación comprueba primero la aprobación **sin rendirla**, en los cinco ramos. Si ya aprueba, muestra “No necesitas Global” (o recuperativo), su nota final sin recuperación y no añade una nota G, ni siquiera0. Solo cuando no aprueba por sí sola se calcula un mínimo usando la sustitución o fórmula del ramo. Esto no modifica el carácter voluntario del Global: si el estudiante decide ingresar una nota, se sigue aplicando su reemplazo incluso cuando empeora el resultado. Una ausencia justificada de Física que necesita sustitución no se presenta como aprobación sin Global.
+
+“Probar” aplica exactamente el contexto calculado. Desde notas reales, no reactiva hipótesis ni ajustes antiguos que estaban inactivos. Dentro de una simulación, conserva las hipótesis activas usadas en el cálculo. Los decimales de las hipótesis adicionales se conservan hasta la precisión admitida; solo el mínimo recomendado se eleva a centésimas. “Deshacer” recupera la simulación y su configuración anterior, sin borrar notas reales introducidas después. Las notas reales nunca cambian al probar una fila. Si ya hay una nota de recuperación en el escenario, no se presenta como un examen pendiente ni se borra para proponer aprobación sin rendirlo.
 
 ## Casos de referencia derivados manualmente
 

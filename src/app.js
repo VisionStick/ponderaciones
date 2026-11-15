@@ -1,7 +1,7 @@
 import { COURSES, COURSE_IDS, RULE_VERSION, modelFor } from './courses.js';
 import { analyze, messageFor, omega } from './engine.js';
 import { parseGrade, parseLabFactor, mean } from './rational.js';
-import { buildCases, labProgress } from './scenarios.js';
+import { buildCases, labProgress, applyCaseToCourse, undoCaseForCourse } from './scenarios.js';
 import { STORAGE_KEY, blankCourse, readState, validateState } from './state.js';
 
 import { esc, icon } from './ui.js';
@@ -133,15 +133,16 @@ function recoveryHTML(a) {
   if (a.id === 'calculus1') text = 'Global voluntario para quienes se inscriban a tiempo. Reemplaza el peor certamen, incluso si baja tu nota. No tiene mínimo de presentación ni mínimo propio.';
   if (a.id === 'algebra') text += ' Debes inscribirte dentro del plazo.';
   if (a.justified) text = 'Por tu ausencia justificada, sustituye primero el certamen no rendido y después recalcula el ramo.';
-  if (a.exact?.pass && !a.hasG) text = (a.id === 'physics' ? 'No necesitas Global.' : `Ya apruebas sin ${c.recoveryName}. ${a.id === 'programming' ? 'Si tienes acceso y lo rindes' : 'Si lo rindes'}, su resultado puede bajar tu nota.`);
+  const approvedWithoutRecovery = !a.hasG && (a.exact?.pass || a.status === 'secured');
+  if (approvedWithoutRecovery) text = (a.id === 'physics' ? 'No necesitas Global.' : `Ya apruebas sin ${c.recoveryName}. ${a.id === 'programming' ? 'Si tienes acceso y lo rindes' : 'Si lo rindes'}, su resultado puede bajar tu nota.`);
   let badge = 'Situación aún por definir';
   if (a.issues.length) badge = 'Falta confirmar un requisito';
   else if (a.hasG && a.exact) badge = a.exact.pass ? 'Requisitos de aprobación cumplidos' : 'La nota ingresada no alcanza';
-  else if (a.exact?.pass) badge = a.id === 'physics' ? 'No necesitas Global' : a.id === 'programming' ? 'Ya apruebas sin recuperativo' : 'Opcional: ya apruebas';
+  else if (approvedWithoutRecovery) badge = a.id === 'programming' ? 'No necesitas recuperativo' : 'No necesitas Global';
   else if (a.id === 'physics' && a.exact) badge = a.exact.eligible ? 'Debes rendir Global' : 'No cumples los requisitos para Global';
   else if (a.id === 'programming') badge = a.config.recoveryAccess === 'no' ? 'Sin acceso al recuperativo' : a.config.recoveryAccess === 'yes' ? 'Acceso confirmado' : 'Acceso por confirmar con docente';
   else if (a.regularComplete) badge = a.recoveryTarget ? 'Puedes rendirlo para intentar aprobar' : 'Puedes rendirlo, pero ni 100 alcanza';
-  return `<section class="card recovery-card"><h3>${icon('spark')}${c.recoveryName}</h3><span class="recovery-badge">${esc(badge)}</span><p>${esc(text)}</p>${a.regularComplete && a.recoveryTarget && !a.errors.length ? `<p class="recovery-reference">${a.hasG ? 'Mínimo necesario para aprobar' : 'Tu meta en esta evaluación'}: <strong>${esc(rangeText(a.recoveryTarget))}</strong>${a.issues.length ? ' (condicionado)' : ''}.</p>` : ''}<div class="grade-grid">${fieldHTML({ id: 'g', label: `Nota de ${c.recoveryName.toLowerCase()}`, kind: 'grade' }, true)}</div>${a.hasG && a.exactBefore?.pass && !a.exact?.pass && a.regularComplete ? '<p style="color:#ac6d53;margin-top:12px">El reemplazo hace bajar tu nota. Sin rendirlo, aprobabas.</p>' : ''}</section>`;
+  return `<section class="card recovery-card"><h3>${icon('spark')}${c.recoveryName}</h3><span class="recovery-badge">${esc(badge)}</span><p>${esc(text)}</p>${a.regularComplete && a.recoveryTarget && !a.errors.length && (a.hasG || !a.exactBefore?.pass) ? `<p class="recovery-reference">${a.hasG ? 'Mínimo para aprobar con recuperación' : 'Tu meta en esta evaluación'}: <strong>${esc(rangeText(a.recoveryTarget))}</strong>${a.issues.length ? ' (condicionado)' : ''}.</p>` : ''}<div class="grade-grid">${fieldHTML({ id: 'g', label: `Nota de ${c.recoveryName.toLowerCase()}`, kind: 'grade' }, true)}</div>${a.hasG && a.exactBefore?.pass && !a.exact?.pass && a.regularComplete ? '<p style="color:#ac6d53;margin-top:12px">El reemplazo hace bajar tu nota. Sin rendirlo, aprobabas.</p>' : ''}</section>`;
 }
 function updateResults({ preserveGlobal = false } = {}) {
   const a = analysis(), c = COURSES[a.id], message = messageFor(a);
@@ -297,19 +298,27 @@ function renderCaseRows() {
   currentCases = buildCases(state.activeCourse, effective(), active().scenario, caseOptions[state.activeCourse]);
   const p = currentCases, target = document.querySelector('#case-table'); if (!target) return;
   if (!p.rows.length) { target.innerHTML = `<p class="case-empty">${esc(p.reason || 'Ingresa una nota para empezar a comparar tus alternativas.')}</p>`; return; }
-  target.innerHTML = `${p.conditionalAccess ? '<p class="setting-note">Estos casos suponen que tu docente te permite rendir el recuperativo.</p>' : ''}<div class="case-table-scroll"><table class="cases-table"><caption>Combinaciones para cumplir todas las condiciones de aprobación</caption><thead><tr><th scope="col">Si sacas en<br>${esc(p.first.label)}</th><th scope="col">Necesitas en<br>${esc(p.second.label)}</th><th scope="col">Con ese resultado</th><th scope="col">Simular</th></tr></thead><tbody>${p.rows.map((row,i)=>`<tr class="${row.possible?'possible':'not-possible'}"><td><strong>${row.fixed}</strong></td><td><strong>${row.noRecoveryNeeded ? 'Sin Global' : row.possible?esc(fmt(row.required)):'No alcanza'}</strong>${row.noRecoveryNeeded ? '<small>apruebas directamente</small>' : row.possible?'<small>mínimo suficiente</small>':'<small>ni con 100</small>'}</td><td>${row.possible ? row.direct || p.route === 'direct' ? 'Cumples las reglas' : 'Apruebas por recuperación' : 'Prueba otro caso'}</td><td>${row.possible?`<button class="case-button" data-action="try-case" data-row="${i}" aria-label="Probar caso con ${row.fixed} en ${esc(p.first.label)}">Probar ${icon('arrow')}</button>`:'—'}</td></tr>`).join('')}</tbody></table></div><p class="case-footnote">Cada fila es una alternativa. Verificamos también mínimos, descartes y acceso al Global; no basta con sumar el promedio.</p>`;
+  const recovery = COURSES[state.activeCourse].recoveryName;
+  const recoveryHint = p.route !== 'recovery' ? '' : state.activeCourse === 'physics'
+    ? 'Si hace falta Global, verificamos laboratorio, presentación y mínimos. Con una ausencia justificada, primero reemplazamos ese certamen y luego aplicamos las reglas.'
+    : `Cuando hace falta, el ${recovery} reemplaza el certamen más bajo y recalculamos el ramo. Si ya apruebas sin rendirlo, no se agrega una nota de recuperación.`;
+  target.innerHTML = `${p.conditionalAccess ? '<p class="setting-note">Solo los casos que usan el recuperativo suponen que tu docente te permite rendirlo. Los casos de aprobación sin recuperativo no dependen de ese permiso.</p>' : ''}<div class="case-table-scroll"><table class="cases-table"><caption>Combinaciones para cumplir todas las condiciones de aprobación</caption><thead><tr><th scope="col">Si sacas en<br>${esc(p.first.label)}</th><th scope="col">${p.route === 'recovery' ? '¿Necesitas rendirlo?' : 'Necesitas en'}<br>${esc(p.second.label)}</th><th scope="col">Con ese resultado</th><th scope="col">Simular</th></tr></thead><tbody>${p.rows.map((row,i)=>{
+    const noRecovery = row.noRecoveryNeeded;
+    const value = noRecovery ? `No necesitas ${recovery}` : row.possible ? fmt(row.required) : row.reason || 'No alcanza';
+    const detail = noRecovery ? `Apruebas sin rendirlo · nota final ${fmt(row.final)}` : row.possible ? 'Mínimo para aprobar' : row.reason ? 'Este caso no habilita esa vía' : 'Ni con 100';
+    const outcome = noRecovery ? `Apruebas sin ${recovery}` : row.possible ? p.route === 'recovery' ? `Apruebas con ${recovery}` : 'Cumples las reglas' : 'Prueba otro caso';
+    return `<tr class="${row.possible?'possible':'not-possible'} ${noRecovery?'no-recovery':''}"><td><strong>${row.fixed}</strong></td><td><strong>${esc(value)}</strong><small>${esc(detail)}</small></td><td>${esc(outcome)}</td><td>${row.possible?`<button class="case-button" data-action="try-case" data-row="${i}" aria-label="Probar caso con ${row.fixed} en ${esc(p.first.label)}">Probar ${icon('arrow')}</button>`:'—'}</td></tr>`;
+  }).join('')}</tbody></table></div><p class="case-footnote">${p.route === 'recovery' ? `Primero comprobamos si cada caso ya aprueba sin ${esc(recovery)}. ` : ''}Cada fila es una alternativa y respeta todos los requisitos del ramo. ${esc(recoveryHint)}</p>`;
 }
 function applyCase(index) {
-  const row = currentCases?.rows[index]; if (!row?.hypotheses) return;
-  const c = active(); previousScenarios[state.activeCourse] = { scenario: c.scenario, sims: Object.fromEntries(Object.entries(c.grades).map(([k,v])=>[k,v.sim || ''])) };
-  c.scenario = true;
-  for (const [key,value] of Object.entries(row.hypotheses)) { c.grades[key] ||= { real:'', sim:'' }; c.grades[key].sim = value; }
+  const change = applyCaseToCourse(active(), currentCases?.rows[index]); if (!change) return;
+  previousScenarios[state.activeCourse] = change.previous;
+  state.courses[state.activeCourse] = change.course;
   save(); renderForm(); updateResults(); toast('Caso aplicado como simulación. Tus notas reales siguen intactas.');
 }
 function undoCase() {
   const prev = previousScenarios[state.activeCourse]; if (!prev) return;
-  const c = active(); c.scenario = prev.scenario;
-  for (const [key,cell] of Object.entries(c.grades)) cell.sim = prev.sims[key] || '';
+  state.courses[state.activeCourse] = undoCaseForCourse(active(), prev);
   delete previousScenarios[state.activeCourse]; save(); renderForm(); updateResults(); toast('Volviste a la simulación anterior.');
 }
 

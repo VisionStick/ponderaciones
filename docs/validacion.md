@@ -1,4 +1,40 @@
-# Validación · Rumbo 2.0 · reglas 2026-2.4
+# Validación · Rumbo 2.0.1 · escenarios de recuperación
+
+Revisión del 15 de noviembre de 2026. Esta corrección cambia la interpretación y aplicación de los casos de la tabla; **no modifica los reglamentos ni sus fórmulas**. La versión académica permanece en `2026-2.4`.
+
+## Error corregido y pruebas de regresión
+
+La tabla calculaba en Matemáticas y Programación el mínimo que conservaría la aprobación **si se rindiera voluntariamente** la recuperación y lo presentaba como si fuera necesario rendirla. Ahora cada fila de los cinco ramos comprueba primero la aprobación sin recuperación. Si ya aprueba, muestra **“No necesitas Global/Recuperativo”**, su nota final y deja la casilla de recuperación vacía. Las ausencias justificadas de Física mantienen su tratamiento obligatorio.
+
+`npm run check`, `npm test` y `npm run build`: **306 pruebas aprobadas, cero fallos y cero omisiones**. Las 26 nuevas pruebas incluyen tablas mixtas en los cinco ramos, reemplazo del peor certamen cuando no es el pendiente, mínimos de Física, acceso al recuperativo, ausencia justificada, límites exactos y aplicación de más de 500 filas válidas, verificando que cada una conserve el resultado anunciado.
+
+- Un conjunto **sintético** reproduce el rango59.49–68.44 y las antiguas recomendaciones30.74/24.07/17.4/10.74/4.07 de la captura del error. Ahora sus cinco filas no necesitan Global. Con Control3=60, NF64.860648… sin rendirlo.
+- MAT070/MAT061/MAT071, con factor1, C1=50, C2=60 y PQ60: C3=20/40 necesitan Global48; C3=60/80/100 ya aprueban. Con C1=10, C2=C3=60 y PQ20, Global78 sustituye C1 y alcanza54.5;77.99 no alcanza.
+- Física conserva la fórmula60% presentación +40% Global, el mínimo propio50 y los demás requisitos. No se sustituye un certamen ordinario; sí el justificado cuando corresponde.
+- Programación conserva el promedio mínimo de certámenes55 y su reemplazo. La falta de permiso para recuperativo no invalida las filas que aprueban sin él.
+- Exactamente54.5 aprueba;54.499999 no se redondea para decidir. Las hipótesis mantienen hasta seis decimales al aplicarlas.
+- “Probar” desde notas reales elimina del nuevo escenario las hipótesis y ajustes inactivos de un ejemplo anterior. “Deshacer” los recupera y conserva cualquier nota real ingresada después. Una recuperación real ya ingresada nunca se borra automáticamente.
+
+## Comprobación en navegador de esta corrección
+
+Se usaron notas ficticias, escritorio y un marco de390×844; no un teléfono físico.
+
+| Acción | Resultado observado |
+| --- | --- |
+| Reproducir rango59.49–68.44 en Álgebra y seleccionar Global | Cinco filas “No necesitas Global”; desaparecen los mínimos ficticios |
+| Probar Control3=60 y deshacer | NF64.86; Global vacío; nota real de Control3 vacía; se recuperan las cinco alternativas |
+| MAT070: probar C3=20 | Global48 simulado; NF54.5 |
+| Volver a notas reales y probar C3=60 | NF57.5; no reaparece el Global48 anterior |
+| Tablas mixtas de MAT071, Física y Programación | Separan correctamente los casos con y sin recuperación; coinciden con el cálculo independiente |
+| Tabla de Álgebra en móvil | Texto legible; ancho visible375px y contenido375px, sin desbordamiento horizontal |
+| Probar y deshacer desde móvil | Mismo resultado64.86 y restauración de alternativas |
+| Consola de aplicación durante estas acciones | Sin errores ni advertencias de la aplicación; se excluyen mensajes de la extensión del navegador |
+
+La captura `casos-global-corregidos.jpg` documenta la tabla corregida con datos sintéticos. Las páginas y respaldos usados exclusivamente para QA no se publican.
+
+---
+
+# Validación previa · Rumbo 2.0 · reglas 2026-2.4
 
 Revisión del 14 de noviembre de 2026 (Chile). El cambio académico se limita a retirar el bloqueo de FIS111 por varios certámenes bajo 50. Los mínimos de laboratorio, presentación, Global, asistencia, ausencias justificadas y las reglas de los otros cuatro ramos se conservan.
 

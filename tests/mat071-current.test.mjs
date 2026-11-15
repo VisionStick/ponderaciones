@@ -80,8 +80,8 @@ test('MAT071: casos C3/Q3 verificables con sus distintos pesos efectivos',()=>{
   assert.deepEqual(p.rows.map(r=>r.possible?Number(r.required):null),[null,84,24,0,0]);assert.equal(JSON.stringify(s),before);
   for(const row of p.rows.filter(r=>r.possible)){const e=evaluate('calculus1',factorConfig,{...v,...row.hypotheses});assert.ok(e.pass);if(row.required.cmp(0)>0)assert.equal(evaluate('calculus1',factorConfig,{...v,...row.hypotheses,q3:row.required.sub('.01')}).pass,false);}
 });
-test('MAT071: casos de Global son voluntarios incluso si ya aprobarías sin él',()=>{
-  const v=full('calculus1',60);delete v.c3;const p=buildCases('calculus1',state(v),false,{route:'recovery'});const row=p.rows.find(r=>r.fixed===100);eq(row.required,0);assert.equal(row.hypotheses.g,'0.00');
+test('MAT071: un caso que ya aprueba no exige rendir el Global voluntario',()=>{
+  const v=full('calculus1',60);delete v.c3;const p=buildCases('calculus1',state(v),false,{route:'recovery'});const row=p.rows.find(r=>r.fixed===100);assert.equal(row.required,null);assert.equal(row.noRecoveryNeeded,true);assert.equal(row.hypotheses.g,undefined);
 });
 test('Migración2→3 conserva certámenes, Global, notas antiguas y otros ramos sin convertir taller en control',()=>{
   const old=blankState();old.ruleVersion='2026-2.2';old.courses.calculus1.config={};old.courses.calculus1.grades={c1:{real:'42',sim:'55'},pt:{real:'80',sim:''},eta:{real:'1.2',sim:'1'},g:{real:'',sim:'70'}};old.courses.physics.grades={c2:{real:'49.5',sim:''}};
