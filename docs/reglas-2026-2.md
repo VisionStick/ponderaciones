@@ -1,8 +1,8 @@
-# Contrato académico · versión 2026-2.3
+# Contrato académico · versión 2026-2.4
 
 Fuentes: documentos suministrados por el usuario, leídos completos y contrastados visualmente. Las ecuaciones siguientes usan notas en escala 0–100 y comparaciones exactas. No se aplica un redondeo general a cada evaluación.
 
-**Correcciones solicitadas por el responsable del proyecto el 26 de octubre de 2026:** se usa 54,5 como mínimo de aprobación final y 49,5 como mínimo de presentación al Global de Física. Además, dos certámenes de Física bajo 50 bloquean la aprobación y el acceso al Global. Estas correcciones provienen del usuario: no se atribuyen a los PDF originales, que indican 55/50 y no incluyen ese bloqueo de dos certámenes. Los mínimos particulares permanecen separados: NL de Física ≥55, cada certamen de Física ≥50 para aprobación directa, Global de Física ≥50, y promedio de certámenes de Programación ≥55.
+**Correcciones solicitadas por el responsable del proyecto el 26 de octubre de 2026:** se usa 54,5 como mínimo de aprobación final y 49,5 como mínimo de presentación al Global de Física. La restricción adicional de dos certámenes bajo 50 solicitada entonces fue retirada expresamente el 14 de noviembre de 2026: varios certámenes bajos no bloquean el Global si se cumplen los demás requisitos. Estas correcciones provienen del usuario: no se atribuyen a los PDF originales, que indican 55/50 y no incluyen ese bloqueo de dos certámenes. Los mínimos particulares permanecen separados: NL de Física ≥55, cada certamen de Física ≥50 para aprobación directa, Global de Física ≥50, y promedio de certámenes de Programación ≥55.
 
 El 27 de octubre de 2026 el usuario reemplazó expresamente el documento anterior de MAT071 por cuatro capturas. El programa de 2018 deja de ser fuente de cálculo; se mantienen los umbrales solicitados previamente.
 
@@ -41,9 +41,9 @@ Fuentes: Reglas FIS111 2s2026 (1).pdf, pp.2–3; Reglas_FIS111L_08-07-26.pdf, pp
 - NL = 0.5×promedio(IS)+0.5×promedio conjunto(IN y CI). El segundo grupo agrupa todas las evaluaciones, no los dos promedios de IN/CI.
 - PS = α×(0.60PCe+0.08PCo+0.12PTa+0.20NL).
 - Aprobación directa: NL≥55, cada certamen≥50, PS≥54,5; NF=PS.
-- Si dos certámenes están bajo50: no puede aprobar ni acceder a Global, aunque el promedio sea alto. Con una ausencia justificada se sustituye primero y se cuenta después.
+- La cantidad de certámenes bajo50 no bloquea el Global. Uno, dos o tres certámenes bajos impiden la aprobación directa, pero conservan la vía de recuperación si NL y PS cumplen sus mínimos. Esta actualización modifica exclusivamente ese bloqueo, por instrucción del responsable del proyecto del 14/11/2026.
 - Si NL<55 o PS<49,5: reprueba y NF=min(PS,54), incluso con Global alto.
-- En los demás casos con NL≥55, PS≥49,5 y como máximo un certamen bajo50, corresponde Global. Aprueba solo si G≥50 y0.60PS+0.40G≥54,5. Si pasa, NF=esa combinación; si falla, NF=min(PS,54).
+- En los demás casos con NL≥55, PS≥49,5, corresponde Global. Aprueba solo si G≥50 y0.60PS+0.40G≥54,5. Si pasa, NF=esa combinación; si falla, NF=min(PS,54).
 - G mínimo ordinario = max(50,(54,5−0.60PS)/0.40), únicamente con PS fijo.
 - Con ausencia justificada de un certamen, reemplazarlo primero por G, recalcular PS y volver a aplicar todas las ramas anteriores. Si tras sustituir cumple aprobación directa, NF=PS, sin forzar la combinación60/40. El sitio modela una ausencia; múltiples ausencias requieren información adicional.
 - Justificación de certamen: plazo7 días hábiles. Tareas y controles de cátedra no se recuperan. Ausencia no justificada recibe la nota mínima oficial, ingresada por el estudiante.
@@ -118,13 +118,15 @@ Cada fila fija una nota entre20/40/60/80/100 y busca el menor valor suficiente d
 | Álgebra: todas las notas100 | NS100 por tope |
 | Física: IS40,80; IN100; CI60,20 | NL60; IN y CI forman un solo promedio |
 | Física: IS50,50; IN40; CI100 y una pendiente | CI pendiente40 daNL55 |
-| Física: C49.5,49.99,100; resto100 | Bloqueado por dos certámenes bajo50; Global100 no permite aprobar |
+| Física: C49.5,49.99,100; resto100 | PS79.898; Global100 daNF87.9388, aprueba por Global |
 | Física: C50 cada uno, PCo42.5, PTa42.5, NL55, α1 | PS49.5; Global62 daNF54.5;61.99 no aprueba |
 | Física: C50 cada uno, PCo67.5, PTa67.5, NL55, α1 | PS54.5; aprobación directa |
+| Física: C40,40,70; PCo42.5, PTa42.5, NL55, α1; G62 | PS49.5; NF54.5, aprueba; G61.99 no alcanza |
+| Física: C49,49,49; resto100, α1; G50 | PS69.4; NF61.64, aprueba por Global |
 | Física: NL54.5, resto100 | Reprueba por laboratorio: ese mínimo sigue siendo55 |
 | Física: C49,60,71; resto60; α1; G49.5 | No aprueba por G<50 |
 | Física: C60,60 y ausente justificado, resto60, α1, G50 | PS58 tras reemplazo; NF58 (sin forzar60/40) |
-| Física: C30,30 y ausente justificado, resto60, α1, G70 | Bloqueado por dos certámenes bajo50 |
+| Física: C30,30 y ausente justificado, resto60, α1, G70 | PS50 tras sustituir; Global70 daNF58, aprueba |
 | Programación: C1=50,C2=59.99, resto100 | C54.995, P77.4975, NF54; mínimo propio de C sigue55 |
 | Programación: C1=C2=55, resto54 | C55, P54.5, aprueba |
 | MAT071: C40,50,70; Q50,60,70; L1.1 | B55, NF60.5 |

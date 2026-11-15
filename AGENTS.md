@@ -16,3 +16,7 @@ This repository is a static Spanish-language academic calculator. Preserve per-c
 - MAT071 now uses three equally weighted certámenes and three controles (75%/25%), a bounded lab factor and a voluntary Global. The 2018 program was explicitly superseded by the user on 2026-10-27. Never reapply its old weights or eligibility.
 - One new lab screenshot is labeled MAT061: use its grade breakdown only in the explicitly confirmed mode; otherwise use MAT071’s official L factor.
 - Keep migrations explicit and preserve both real and simulated notes, including legacy combined Physics lab inputs.
+
+- FIS111 version 2026-2.4 removes the old two-certificates-under-50 block. Keep all other lab, attendance, presentation, Global, and justified-absence conditions.
+- Directory data belongs in data/directory.json, with stable IDs and normalized relations. Read docs/directorio.md before editing the schema. Never infer course teaching assignments from a department.
+- Admin edits are local drafts; never describe them as published or as a shared database. Do not include backend credentials in the browser.

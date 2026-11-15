@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#164f46">
+  <meta name="robots" content="noindex">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'">
+  <title>Editor del directorio · Rumbo</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./directory.css">
+  <link rel="stylesheet" href="./admin.css">
+  <script type="module" src="./src/admin.js"></script>
+</head>
+<body class="admin-page">
+  <a class="skip-link" href="#main">Ir al editor</a>
+  <header class="admin-topbar"><a class="brand" href="./"><img src="./favicon.svg" width="40" height="40" alt=""><span class="brand-name">rumbo.</span></a><a class="outline-button" href="./#consultas">Ver directorio publicado</a></header>
+  <main id="main" tabindex="-1" class="admin-main">
+    <div class="admin-heading"><span class="eyebrow">MANTENER LA INFORMACIÓN AL DÍA</span><h1>Editor del <em>directorio.</em></h1><p>Registra una vez cada profesor y relaciona sus asignaturas y horarios.</p></div>
+    <div class="admin-notice"><strong>Estás preparando un borrador.</strong><p>Los cambios se guardan en este navegador. Para publicarlos, descarga el catálogo y reemplaza <code>data/directory.json</code> en el repositorio. Ejecuta las pruebas para validar el archivo antes de publicarlo. Este editor no escribe en el sitio publicado.</p></div>
+    <div class="admin-toolbar"><button class="primary-button" id="admin-export" disabled>Descargar catálogo</button><button class="outline-button" id="admin-import">Importar catálogo</button><button class="text-button" id="admin-undo" disabled>Deshacer cambio</button><button class="text-button" id="admin-restore" disabled>Restaurar publicado</button></div>
+    <p id="admin-status" role="status" aria-live="polite">Cargando catálogo…</p>
+    <div id="admin-errors" role="alert"></div>
+    <div id="admin-summary"></div>
+    <div class="admin-default"><label for="admin-default-period">Semestre mostrado al abrir el directorio</label><select id="admin-default-period" disabled></select></div>
+    <div class="admin-editor card"><div class="admin-records"><label for="admin-collection">Qué quieres actualizar</label><select id="admin-collection"></select><label for="admin-record">Registro</label><select id="admin-record"></select><button class="outline-button" id="admin-new" disabled>Crear registro</button></div><form id="admin-form"><p>Preparando el editor…</p></form></div>
+    <details class="directory-source" open><summary>Cómo actualizar el directorio</summary><ol><li>Registra el departamento y las asignaturas, si todavía no existen.</li><li>Añade al profesor una sola vez. En “Docencia por semestre”, relaciónalo con cada ramo que imparte.</li><li>Registra sus horarios y campus. Deja el lugar vacío para usar su oficina.</li><li>Descarga el catálogo validado. Actualiza únicamente <code>data/directory.json</code> para publicar los cambios.</li></ol><p>El editor comprueba referencias, horarios duplicados y franjas solapadas. Para retirar un registro relacionado, primero modifica sus vínculos. Añadir una asignatura al directorio no crea su calculadora: las reglas académicas requieren una revisión y pruebas propias.</p></details>
+  </main>
+  <input id="admin-file" type="file" accept="application/json,.json" hidden>
+  <dialog id="admin-dialog" aria-labelledby="admin-dialog-title"><div class="dialog-body"><h2 id="admin-dialog-title"></h2><p id="admin-dialog-copy"></p><div class="dialog-actions"><button class="secondary-button" id="admin-cancel">Cancelar</button><button class="primary-button" id="admin-confirm">Confirmar</button></div></div></dialog>
+  <noscript>El editor necesita JavaScript. El catálogo publicado se conserva sin cambios.</noscript>
+</body>
+</html>

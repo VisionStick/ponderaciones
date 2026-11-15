@@ -30,11 +30,11 @@ test('Física: PS49.5 permite Global62 exactamente',()=>{
 test('Física: PS54.5 aprueba directamente sin exigir55',()=>{
   const v=full('physics','67.5',phys);setGroup(v,'c',3,50);v.nl=55;const e=evaluate('physics',phys,v);eq(e.final,'54.5');assert.ok(e.direct);
 });
-test('Física: dos certámenes49.5/49.99 bloquean aunque todo lo demás sea100',()=>{
-  const v=full('physics',100,phys);v.c1='49.5';v.c2='49.99'; const e=evaluate('physics',phys,v,{recovery:q(100)});assert.equal(e.reason,'two-certs');assert.equal(e.eligible,false);assert.equal(e.pass,false);
+test('Física: dos certámenes49.5/49.99 permiten aprobar con Global100',()=>{
+  const v=full('physics',100,phys);v.c1='49.5';v.c2='49.99'; const e=evaluate('physics',phys,v,{recovery:q(100)});assert.equal(e.reason,'passed');assert.equal(e.eligible,true);assert.equal(e.pass,true);eq(e.semester,'79.898');eq(e.final,'87.9388');
 });
-test('Física: bloqueo de dos certámenes funciona con el resto vacío y asistencia desconocida',()=>{
-  const a=analyze('physics',stateFor('physics',{c1:40,c2:49.9}));assert.equal(a.status,'impossible');assert.equal(a.recoveryTarget,null);assert.equal(a.target,null);
+test('Física: dos certámenes bajos y asistencia desconocida conservan escenarios condicionales',()=>{
+  const a=analyze('physics',stateFor('physics',{c1:40,c2:49.9}));assert.equal(a.status,'conditional');assert.equal(a.recoveryTarget,null);assert.equal(a.target,null);
 });
 test('Física: un solo certamen49.5 permite Global, pero G49.5 no aprueba',()=>{
   const v=full('physics',100,phys);v.c1='49.5';assert.ok(evaluate('physics',phys,v,{recovery:q(50)}).pass);assert.equal(evaluate('physics',phys,v,{recovery:q('49.5')}).pass,false);
@@ -65,8 +65,8 @@ test('Casos MAT070: C50/60, C3=20/40/60/80/100 requiere PQ88/68/48/28/8',()=>{
   const s=stateFor('calculus',{c1:50,c2:60},calc);const original=JSON.stringify(s);const p=buildCases('calculus',s);assert.equal(p.first.id,'c3');assert.equal(p.second.id,'pq');assert.deepEqual(p.rows.map(r=>Number(r.required)),[88,68,48,28,8]);assert.equal(JSON.stringify(s),original);
   for(const row of p.rows)assert.equal((50+60+row.fixed+Number(row.required))/4,54.5);
 });
-test('Casos Física: con un certamen bajo50, sugerir otro bajo50 nunca aprueba ni conGlobal100',()=>{
-  const v=full('physics',100,phys);v.c1=49;delete v.c2;const p=buildCases('physics',stateFor('physics',v,phys),false,{route:'recovery'});assert.equal(p.rows[0].possible,false);assert.equal(p.rows[1].possible,false);assert.equal(p.rows[2].possible,true);eq(p.rows[2].required,50);
+test('Casos Física: dos certámenes bajo50 pueden aprobar con un Global suficiente',()=>{
+  const v=full('physics',100,phys);v.c1=49;delete v.c2;const p=buildCases('physics',stateFor('physics',v,phys),false,{route:'recovery'});assert.equal(p.rows[0].possible,true);assert.equal(p.rows[1].possible,true);eq(p.rows[0].required,50);eq(p.rows[1].required,50);assert.equal(p.rows[2].possible,true);eq(p.rows[2].required,50);
 });
 test('Casos: resto60 es una hipótesis explícita y se puede cambiar',()=>{
   const s=stateFor('calculus',{c1:50},calc);const a=buildCases('calculus',s,false,{first:'c2',second:'c3',rest:'60'});const b=buildCases('calculus',s,false,{first:'c2',second:'c3',rest:'100'});assert.equal(a.rest[0].id,'pq');eq(a.rows[2].required,48);eq(b.rows[2].required,8);

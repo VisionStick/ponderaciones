@@ -12,7 +12,7 @@
 
 ## Versiones y cambios de reglas
 
-El identificador de regla actual es `2026-2.3`. Un cambio académico que altera resultados debe cambiar `RULE_VERSION` y documentarse. La importación admite la versión actual y migraciones explícitas desde 2026-2.1 y 2026-2.2: conserva notas e hipótesis, mantiene el laboratorio combinado anterior de Física y conserva taller/η de MAT071 como datos históricos, sin reinterpretarlos como controles/factor L. Al cargar desde almacenamiento se avisa del cambio de reglas. Las demás versiones se rechazan. Agregar una migración explícita con pruebas si se desea conservar datos entre versiones. Mantener los identificadores de evaluaciones estables dentro de una versión.
+El identificador de regla actual es `2026-2.4`. Un cambio académico que altera resultados debe cambiar `RULE_VERSION` y documentarse. La importación admite la versión actual y migraciones explícitas desde 2026-2.1, 2026-2.2 y 2026-2.3: conserva notas e hipótesis, mantiene el laboratorio combinado anterior de Física y conserva taller/η de MAT071 como datos históricos, sin reinterpretarlos como controles/factor L. Al cargar desde almacenamiento se avisa del cambio de reglas. Las demás versiones se rechazan. Agregar una migración explícita con pruebas si se desea conservar datos entre versiones. Mantener los identificadores de evaluaciones estables dentro de una versión.
 
 Los cambios de diseño o mensajes que no modifican reglas pueden conservar la versión académica. Nunca almacenar credenciales ni notas personales de usuarios en el código, fixtures, issues o capturas del proyecto.
 
@@ -29,3 +29,7 @@ Los cambios de diseño o mensajes que no modifican reglas pueden conservar la ve
 `src/scenarios.js` genera casos sin escribir notas reales. Cada hipótesis adicional debe ser visible; toda fila ofrecida debe volver a pasar las reglas del motor. El factor L de MAT071 usa un validador propio de 0,9 a 1,1: no es una nota 0–100. No usar 1 como valor implícito. El validador positivo sin tope se conserva únicamente para el campo η histórico.
 
 El programa anterior de MAT071 fue reemplazado por el usuario. La versión actual tiene certámenes de igual peso, por lo que ya no tiene la discontinuidad por cambio de ponderación del reemplazo. Las pruebas deben seguir las fuentes vigentes; conservar el historial de reglas en Git, sin dejar fixtures de fuentes descartadas como expectativas actuales. La pauta de laboratorio con encabezado MAT061 requiere elección explícita del modo confirmado.
+
+## Relacionar un ramo con el directorio
+
+Registrar una asignatura en el directorio no crea reglas de cálculo. En el editor, selecciona la calculadora existente en la ficha de la asignatura; registra los profesores, vínculos de docencia por semestre y horarios una sola vez. Los datos se incorporan únicamente a `data/directory.json`. No inferir que todos los profesores del departamento imparten todos sus ramos. Véase `docs/directorio.md`.

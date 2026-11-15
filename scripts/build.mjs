@@ -1,8 +1,10 @@
-import { cp, mkdir, rm } from 'node:fs/promises';
+import { cp, mkdir, rm, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { validateDirectory } from '../src/directory.js';
+validateDirectory(JSON.parse(await readFile(new URL('../data/directory.json',import.meta.url),'utf8')));
 const root = fileURLToPath(new URL('../', import.meta.url));
 await rm(join(root, 'dist'), { recursive: true, force: true });
 await mkdir(join(root, 'dist'), { recursive: true });
-for (const file of ['index.html', 'styles.css', 'favicon.svg', 'src']) await cp(join(root, file), join(root, 'dist', file), { recursive: true });
+for (const file of ['index.html', 'styles.css', 'favicon.svg', 'src', 'directory.css', 'data', 'admin.html', 'admin.css']) await cp(join(root, file), join(root, 'dist', file), { recursive: true });
 console.log('Static site ready in dist/');

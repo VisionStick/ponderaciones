@@ -4,25 +4,9 @@ import { parseGrade, parseLabFactor, mean } from './rational.js';
 import { buildCases, labProgress } from './scenarios.js';
 import { STORAGE_KEY, blankCourse, readState, validateState } from './state.js';
 
-const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const paths = {
-  curve: '<path d="M3 18h18M5 20V4M6 15c4 0 4-10 8-10s3 8 7 8"/>',
-  grid: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 12h16M12 4v16"/>',
-  orbit: '<ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(35 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-35 12 12)"/><circle cx="12" cy="12" r="1"/>',
-  code: '<path d="m8 6-6 6 6 6m8-12 6 6-6 6M14 4l-4 16"/>',
-  check: '<path d="m5 12 4 4L19 6"/>', leaf: '<path d="M5 19C-1 3 14 5 20 3c2 13-6 19-15 16Zm0 0L17 7"/>',
-  spark: '<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/>',
-  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
-  help: '<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3v.1"/>',
-  download: '<path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/>', upload: '<path d="M12 16V4m-4 4 4-4 4 4M4 16v4h16v-4"/>',
-  book: '<path d="M3 5c4-1 7 0 9 2 2-2 5-3 9-2v14c-4-1-7 0-9 2-2-2-5-3-9-2Zm9 2v14"/>',
-  chart: '<path d="M4 4v16h17M8 15v-4m5 4V7m5 8V4"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
-  arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>', reset: '<path d="M3 10a9 9 0 1 1 2 9M3 4v6h6"/>',
-  pencil: '<path d="m4 16-1 5 5-1L20 8l-4-4ZM13 7l4 4"/>', flask: '<path d="M9 3h6m-5 0v7L4 20h16l-6-10V3M8 14h8"/>',
-  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>', lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>',
-  dot: '<circle cx="12" cy="12" r="7"/>', minus: '<path d="M5 12h14"/>', chevron: '<path d="m9 5 7 7-7 7"/>', heart: '<path d="M12 20 3.5 12a5 5 0 0 1 7-7L12 7l1.5-2a5 5 0 0 1 7 7Z"/>'
-};
-const icon = name => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.dot}</svg>`;
+import { esc, icon } from './ui.js';
+import { loadDirectory, directoryRoute, readDirectoryRoute } from './directory.js';
+import { renderDirectory, renderCourseConsultations } from './directory-view.js';
 const fmt = (x, digits = 2) => {
   if (x === null || x === undefined) return '—';
   const n = Number(x), rounded = Math.round(n * 10 ** digits) / 10 ** digits;
@@ -42,22 +26,64 @@ const analysis = () => analyze(state.activeCourse, effective(), active().scenari
 function toast(text) { const el = document.querySelector('#toast'); el.textContent = text; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 5000); }
 function save() { try { storage.setItem(STORAGE_KEY, JSON.stringify(state)); saveUnavailable = false; } catch { if (!saveUnavailable) toast('El navegador no permite guardar. Puedes exportar tus notas para conservarlas.'); saveUnavailable = true; } const el = document.querySelector('#save-status'); if (el) el.textContent = saveUnavailable ? 'Guardado no disponible' : 'Guardado en este navegador'; }
 
+
+let directoryData = null, directoryPromise = null, renderedHash = null;
+const inDirectory = () => location.hash.startsWith('#consultas');
+function navigate(hash, { replace = false, focus = true } = {}) {
+  history[replace ? 'replaceState' : 'pushState'](null, '', hash);
+  const course = location.hash.match(/^#notas\/([a-z0-9-]+)$/)?.[1];
+  if (COURSE_IDS.includes(course)) { state.activeCourse = course; save(); }
+  shell();
+  if (focus) { document.querySelector('#main')?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: 'instant' }); }
+}
+function catalogue(force = false) {
+  if (force) { directoryData = null; directoryPromise = null; }
+  if (directoryData) return Promise.resolve(directoryData);
+  directoryPromise ||= loadDirectory().then(data => { directoryData = data; return data; }).catch(error => { directoryPromise = null; throw error; });
+  return directoryPromise;
+}
+async function showDirectory(force = false) {
+  const host = document.querySelector('#directory-view'); if (!host) return;
+  host.innerHTML = '<div class="directory-loading" role="status">Cargando los horarios de tus profesores…</div>';
+  try {
+    const data = await catalogue(force); if (!host.isConnected) return;
+    renderDirectory(host, data, readDirectoryRoute(location.hash), {
+      onFilters: filters => history.replaceState(null, '', directoryRoute(filters)),
+      onProfessor: filters => navigate(directoryRoute(filters))
+    });
+  } catch {
+    if (!host.isConnected) return;
+    host.innerHTML = '<div class="directory-empty" role="alert"><h1>No pudimos cargar los horarios.</h1><p>Revisa tu conexión e inténtalo otra vez. Puedes seguir usando tus notas.</p><button class="primary-button" data-directory-retry>Volver a intentar</button></div>';
+    host.querySelector('button').onclick = () => showDirectory(true);
+  }
+}
+async function showCourseConsultations() {
+  const host = document.querySelector('#course-consultations'); if (!host) return;
+  const id = state.activeCourse;
+  try { const data = await catalogue(); if (host.isConnected) renderCourseConsultations(host, data, id, filters => navigate(directoryRoute(filters))); }
+  catch { if (host.isConnected) host.innerHTML = '<section class="card course-consultations"><p>Los horarios no se pudieron cargar.</p><button class="text-button" data-action="directory">Consultar el directorio</button></section>'; }
+}
+
 function shell() {
-  const c = COURSES[state.activeCourse];
-  document.querySelector('#app').innerHTML = `<div class="layout">
+  renderedHash = location.hash;
+  const c = COURSES[state.activeCourse], directory = inDirectory();
+  document.querySelector('#app').innerHTML = `<div class="layout ${directory ? 'directory-mode' : ''}">
     <aside class="sidebar" aria-label="Asignaturas"><a class="brand" href="#" data-action="home" aria-label="Rumbo, inicio"><img src="./favicon.svg" alt="" width="40" height="40"><div><div class="brand-name">rumbo<span style="color:#9caf86">.</span></div><div class="brand-tag">Tus notas, tu próximo paso.</div></div></a>
       <div class="semester-pill"><span>Mi semestre</span><strong>2026 · 2° ${icon('chevron')}</strong></div>
-      <nav><p class="nav-heading">MIS ASIGNATURAS</p><div class="course-nav">${COURSE_IDS.map(id => `<button class="course-button ${id === c.id ? 'active' : ''}" data-course="${id}" ${id === c.id ? 'aria-current="page"' : ''}><span class="course-icon ${COURSES[id].color}">${icon(COURSES[id].icon)}</span><span><span class="course-name">${COURSES[id].short}</span><span class="course-code">${COURSES[id].code}</span></span><span class="nav-dot ${Object.values(state.courses[id].grades).some(g => String(g.real || '').trim()) ? 'has-notes' : ''}" id="nav-dot-${id}"></span></button>`).join('')}</div></nav>
+      <nav aria-label="Secciones"><div class="section-nav"><button class="section-button ${!directory ? 'active' : ''}" data-action="grades" ${!directory ? 'aria-current="page"' : ''}>${icon('chart')} Mis notas</button><button class="section-button ${directory ? 'active' : ''}" data-action="directory" ${directory ? 'aria-current="page"' : ''}>${icon('users')} Horarios de consulta</button></div><p class="nav-heading">MIS ASIGNATURAS</p><div class="course-nav">${COURSE_IDS.map(id => `<button class="course-button ${!directory && id === c.id ? 'active' : ''}" data-course="${id}" ${!directory && id === c.id ? 'aria-current="page"' : ''}><span class="course-icon ${COURSES[id].color}">${icon(COURSES[id].icon)}</span><span><span class="course-name">${COURSES[id].short}</span><span class="course-code">${COURSES[id].code}</span></span><span class="nav-dot ${Object.values(state.courses[id].grades).some(g => String(g.real || '').trim()) ? 'has-notes' : ''}" id="nav-dot-${id}"></span></button>`).join('')}</div></nav>
       <div class="sidebar-bottom"><div class="sidebar-note">${icon('leaf')}<strong>Un paso a la vez.</strong>No necesitas tener todas las notas para saber por dónde seguir.</div><button class="nav-footer-button" data-action="help">${icon('help')} ¿Cómo funciona?</button><p class="sidebar-credit">Hecho para entender tu semestre.</p></div>
     </aside>
-    <main class="workspace" id="main"><header class="topbar"><div class="breadcrumb">Mi semestre ${icon('chevron')} <strong>${c.short}</strong></div><div class="toolbar"><span class="save-status" id="save-status">${saveUnavailable ? 'Guardado no disponible' : 'Guardado en este navegador'}</span><button class="icon-button" data-action="export" aria-label="Exportar mis notas" title="Exportar mis notas">${icon('download')}</button><button class="icon-button" data-action="import" aria-label="Importar mis notas" title="Importar mis notas">${icon('upload')}</button><button class="icon-button" data-action="help" aria-label="Cómo funciona" title="Cómo funciona">${icon('help')}</button></div></header>
-      <section class="hero hero-compact"><div><div class="eyebrow">TU SEMESTRE, UN POCO MÁS CLARO</div><h1>¿Qué te falta <em>para pasar?</em></h1><p>Agrega las notas que tienes. Exploremos juntos las que vienen.</p></div><button class="example-button" data-action="example">${icon('spark')} Ver un ejemplo</button></section>
+    <main class="workspace ${directory ? 'directory-workspace' : ''}" id="main" tabindex="-1"><header class="topbar"><div class="breadcrumb">${directory ? 'Comunidad' : 'Mi semestre'} ${icon('chevron')} <strong>${directory ? 'Horarios de consulta' : c.short}</strong></div><div class="toolbar ${directory ? 'directory-toolbar' : ''}"><span class="save-status" id="save-status">${saveUnavailable ? 'Guardado no disponible' : 'Guardado en este navegador'}</span><button class="icon-button" data-action="export" aria-label="Exportar mis notas" title="Exportar mis notas">${icon('download')}</button><button class="icon-button" data-action="import" aria-label="Importar mis notas" title="Importar mis notas">${icon('upload')}</button><button class="icon-button" data-action="help" aria-label="Cómo funciona" title="Cómo funciona">${icon('help')}</button></div></header>
+      ${directory ? '<div id="directory-view"></div>' : `      <section class="hero hero-compact"><div><div class="eyebrow">TU SEMESTRE, UN POCO MÁS CLARO</div><h1>¿Qué te falta <em>para pasar?</em></h1><p>Agrega las notas que tienes. Exploremos juntos las que vienen.</p></div><button class="example-button" data-action="example">${icon('spark')} Ver un ejemplo</button></section>
       <div class="course-heading"><div class="course-heading-left"><span class="course-icon ${c.color}">${icon(c.icon)}</span><div><h2>${c.name}</h2><p>${c.groups}</p></div></div><button class="outline-button" data-action="rules">${icon('book')} Ver reglamento</button></div>
       <div id="summary"></div><section class="card cases-card" id="cases"></section>
       <div class="content-grid"><div><section class="card"><div class="card-header"><div><h3>Tus notas, a tu ritmo</h3><p>Completa las que conoces. Deja el resto en blanco.</p></div>${icon('pencil')}</div><div class="tabs" aria-label="Modo de cálculo"><button data-mode-tab="real" aria-pressed="${!active().scenario}">${icon('pencil')} Mis notas</button><button class="sim-active" data-mode-tab="sim" aria-pressed="${active().scenario}">${icon('flask')} ¿Y si saco…?</button></div><div class="form-body" id="form"></div></section><details class="card details-card" id="calculation-details"><summary>${icon('chart')} Ver cómo se calculó</summary><div class="details-body" id="calculation"></div></details></div><aside class="right-column" id="results" aria-label="Resultados y próximos pasos"></aside></div>
+      <div id="course-consultations"></div>
+`}
       <footer class="page-footer"><span>Rumbo · Tus notas se quedan en este navegador. ${icon('lock')}</span><span>Un paso a la vez, a tu ritmo.</span></footer>
     </main></div>`;
-  renderForm(); updateResults();
+  if (directory) { showDirectory(); return; }
+  renderForm(); updateResults(); showCourseConsultations();
 }
 const select = (key, label, options) => `<div class="setting-row"><label for="config-${key}">${label}</label><select id="config-${key}" data-config="${key}">${options.map(([v, label]) => `<option value="${v}" ${String(effective().config[key]) === v ? 'selected' : ''}>${label}</option>`).join('')}</select></div>`;
 const labCountOptions = (simple = false) => [[simple ? '0' : 'unknown', 'Por confirmar'], ...(!simple ? [['0', 'No hay evaluaciones de este tipo']] : []), ...Array.from({ length: 30 }, (_, i) => [String(i + 1), `${i + 1} en todo el semestre`])];
@@ -90,7 +116,7 @@ function goalHTML(a) {
   const recovery = COURSES[a.id].recoveryName;
   if (a.errors.length) { value = '—'; unit = 'revisa las notas marcadas'; copy = 'No se calcula un mínimo con valores inválidos.'; helper = a.id === 'calculus1' ? 'Notas entre 0 y 100; factor L entre 0,9 y 1,1. Puedes usar coma o punto decimal.' : 'Puedes usar coma o punto decimal, entre 0 y 100.'; }
   else if (a.status === 'approved' || a.status === 'secured') { headline = 'TU RESULTADO'; value = a.exact?.final !== null && a.exact?.final !== undefined ? fmt(a.exact.final) : `≥${fmt(a.finalRange?.low || 54.5)}`; unit = a.scenario ? 'apruebas en este escenario' : 'cumples el mínimo de aprobación'; copy = a.status === 'secured' ? 'Las pendientes ya no pueden bajar tu resultado de 54,5 con las reglas verificadas.' : `Llegaste a la meta. ${a.id === 'physics' ? (a.hasG && !a.exact?.direct ? 'Aprobaste mediante Global.' : 'Cumples las condiciones de aprobación.') : 'Tu nota final está sobre el mínimo o justo en él.'}`; helper = a.hasG ? `Incluye la nota de ${recovery} ingresada.` : a.id === 'physics' ? 'No necesitas rendir Global.' : 'Una evaluación voluntaria posterior puede cambiar este resultado.'; }
-  else if (a.status === 'impossible') { value = '—'; unit = 'sin una vía de aprobación calculable'; copy = a.id === 'physics' && ['c1','c2','c3'].filter(k => a.values[k]?.lt(50) && a.config.justified !== k).length >= 2 ? 'Tienes dos certámenes bajo 50. Con esta restricción no puedes aprobar mediante Global.' : a.exact?.reason === 'lab' ? 'El laboratorio está bajo 55. El Global no puede compensar ese requisito.' : a.exact?.reason === 'presentation' ? 'El promedio semestral está bajo 49,5 y no habilita el Global.' : 'Las restricciones y las notas registradas impiden llegar al mínimo, incluso con el máximo en lo que falta.'; helper = 'Revisa los cálculos y las notas oficiales. Las situaciones excepcionales las resuelve coordinación.'; }
+  else if (a.status === 'impossible') { value = '—'; unit = 'sin una vía de aprobación calculable'; copy = a.exact?.reason === 'global-failed' && a.recoveryTarget ? `Con el Global ingresado no alcanza. Necesitabas al menos ${fmt(a.recoveryTarget.high)} para cumplir las condiciones.` : a.exact?.reason === 'lab' ? 'El laboratorio está bajo 55. El Global no puede compensar ese requisito.' : a.exact?.reason === 'presentation' ? 'El promedio semestral está bajo 49,5 y no habilita el Global.' : 'Las restricciones y las notas registradas impiden llegar al mínimo, incluso con el máximo en lo que falta.'; helper = 'Revisa los cálculos y las notas oficiales. Las situaciones excepcionales las resuelve coordinación.'; }
   else if ((a.status === 'recovery' || (a.regularComplete && !a.exact?.pass)) && a.recoveryTarget) { headline = `OBJETIVO EN ${recovery.toUpperCase()}`; value = rangeText(a.recoveryTarget); unit = `necesitas en el ${recovery}`; copy = a.issues.length ? 'El mínimo depende de la configuración pendiente. Confirma los datos para obtener una sola meta.' : `Con ${fmt(a.recoveryTarget.high)} en el ${recovery} alcanzas la aprobación según las notas ingresadas.`; helper = `Si solo admiten enteros: ${Math.ceil(Number(a.recoveryTarget.high))}.${a.recoveryConditional ? ' Sujeto a que tengas acceso al recuperativo.' : ''}${a.recoveryTarget.partial ? ' Hay configuraciones en las que ni 100 alcanza.' : ''}`; }
   else if (a.target && a.status !== 'empty') { value = rangeText(a.target); unit = a.target.field ? `necesitas en ${a.target.field.toLowerCase()}` : 'necesitas en cada evaluación pendiente'; copy = a.target.field ? 'Manteniendo las otras notas ingresadas, esta es la menor nota que cumple las condiciones.' : `Si obtienes la misma nota en las ${a.target.count} entradas pendientes, esta es la meta para aprobar${a.hasG ? ' con la recuperación ingresada' : ' sin recuperación'}.`; helper = `${a.issues.length ? 'El rango depende de los datos por confirmar. ' : ''}Calculado hacia arriba a centésimas. ${a.target.partial ? 'En algunas configuraciones no alcanza ni con 100.' : 'Si solo admiten enteros: ' + Math.ceil(Number(a.target.high)) + '.'}`; }
   else if (a.status === 'recovery' || a.justified) { value = 'Global' === recovery ? 'G' : 'R'; unit = `simula lo que falta para calcular el ${recovery}`; copy = a.justified ? 'Tu Global sustituirá primero el certamen justificado. Después se recalculan el promedio y todas las condiciones.' : `La vía disponible pasa por el ${recovery}, pero su mínimo depende de las notas que todavía faltan.`; helper = a.recoveryConditional ? 'El acceso al recuperativo debe confirmarse con tu docente.' : 'No se reemplazan las notas pendientes por ceros.'; }
@@ -98,23 +124,18 @@ function goalHTML(a) {
   return `<section class="card goal-card"><div class="goal-eyebrow">${headline}${icon('target')}</div><div class="goal-number ${String(value).length > 6 ? 'range' : ''}">${esc(value)}</div><div class="goal-unit">${esc(unit)}</div><p class="goal-copy">${esc(copy)}</p><p class="goal-help">${esc(helper)}</p></section>`;
 }
 function requirementsHTML(a) {
-  const items = a.exact?.requirements || (a.id === 'physics' ? [{ label: 'Como máximo un certamen bajo 50' }, { label: 'Laboratorio ≥ 55' }, { label: 'Cada certamen ≥ 50 (directa)' }, { label: 'Promedio semestral ≥ 54,5 (directa)' }] : a.id === 'programming' ? [{ label: 'Promedio de certámenes ≥ 55' }, { label: 'Promedio ponderado ≥ 54,5' }] : [{ label: 'Nota final ≥ 54,5' }]);
-  if (a.id === 'physics' && !a.exact) {
-    const lows = ['c1','c2','c3'].filter(k => a.values[k]?.lt(50) && a.config.justified !== k).length;
-    if (lows >= 2) Object.assign(items[0], { met: false, value: lows });
-  }
-  return `<section class="card requirements"><h3>Las condiciones de tu ramo</h3>${items.map(r => `<div class="requirement-row ${r.met === true ? 'met' : r.met === false ? 'failed' : ''}">${icon(r.met === true ? 'check' : r.met === false ? 'minus' : 'dot')}<span>${r.label}</span><b>${r.value === undefined ? 'Pendiente' : esc(fmt(r.value, 4))}</b></div>`).join('')}${a.id === 'physics' ? `<div class="requirement-row ${a.issues.some(x => x.includes('α')) ? '' : 'met'}">${icon(a.issues.some(x => x.includes('α')) ? 'dot' : 'check')}<span>Factor de asistencia</span><b>${a.issues.some(x => x.includes('α')) ? 'Por confirmar' : esc(fmt(a.variants[0].alpha))}</b></div>` : ''}</section>`;
+  const items = a.exact?.requirements || (a.id === 'physics' ? [{ label: 'Laboratorio ≥ 55' }, { label: 'Cada certamen ≥ 50 (directa)' }, { label: 'Promedio semestral ≥ 54,5 (directa)' }] : a.id === 'programming' ? [{ label: 'Promedio de certámenes ≥ 55' }, { label: 'Promedio ponderado ≥ 54,5' }] : [{ label: 'Nota final ≥ 54,5' }]);
+  return `<section class="card requirements"><h3>Las condiciones de tu ramo</h3>${items.map(r => { const alternative = a.id === 'physics' && a.exact?.eligible && r.label.includes('(directa)'); return `<div class="requirement-row ${alternative ? 'not-required' : r.met === true ? 'met' : r.met === false ? 'failed' : ''}">${icon(alternative ? 'dot' : r.met === true ? 'check' : r.met === false ? 'minus' : 'dot')}<span>${esc(r.label)}${alternative ? '<small>Este requisito no bloquea el Global.</small>' : ''}</span><b>${r.value === undefined ? 'Pendiente' : esc(fmt(r.value, 4))}</b></div>`; }).join('')}${a.id === 'physics' ? `<div class="requirement-row ${a.issues.some(x => x.includes('α')) ? '' : 'met'}">${icon(a.issues.some(x => x.includes('α')) ? 'dot' : 'check')}<span>Factor de asistencia</span><b>${a.issues.some(x => x.includes('α')) ? 'Por confirmar' : esc(fmt(a.variants[0].alpha))}</b></div>` : ''}</section>`;
 }
 function recoveryHTML(a) {
   const c = COURSES[a.id];
-  let text = a.id === 'physics' ? 'Se exige laboratorio ≥ 55, PS ≥ 49,5 y no tener dos certámenes bajo 50. El Global debe ser ≥ 50 y la nota final ≥ 54,5.' : a.id === 'programming' ? 'Reemplaza el certamen más bajo, incluso si el resultado empeora. Confirma el acceso con tu docente.' : 'Voluntario. Reemplaza el peor certamen incluso si baja tu nota. No requiere un mínimo de presentación.';
+  let text = a.id === 'physics' ? 'Se exige laboratorio ≥ 55 y PS ≥ 49,5. Puedes tener varios certámenes bajo 50. El Global debe ser ≥ 50 y la nota final ≥ 54,5.' : a.id === 'programming' ? 'Reemplaza el certamen más bajo, incluso si el resultado empeora. Confirma el acceso con tu docente.' : 'Voluntario. Reemplaza el peor certamen incluso si baja tu nota. No requiere un mínimo de presentación.';
   if (a.id === 'calculus1') text = 'Global voluntario para quienes se inscriban a tiempo. Reemplaza el peor certamen, incluso si baja tu nota. No tiene mínimo de presentación ni mínimo propio.';
   if (a.id === 'algebra') text += ' Debes inscribirte dentro del plazo.';
   if (a.justified) text = 'Por tu ausencia justificada, sustituye primero el certamen no rendido y después recalcula el ramo.';
   if (a.exact?.pass && !a.hasG) text = (a.id === 'physics' ? 'No necesitas Global.' : `Ya apruebas sin ${c.recoveryName}. ${a.id === 'programming' ? 'Si tienes acceso y lo rindes' : 'Si lo rindes'}, su resultado puede bajar tu nota.`);
   let badge = 'Situación aún por definir';
-  if (a.id === 'physics' && ['c1','c2','c3'].filter(k => a.values[k]?.lt(50) && a.config.justified !== k).length >= 2) badge = 'No cumples los requisitos para Global';
-  else if (a.issues.length) badge = 'Falta confirmar un requisito';
+  if (a.issues.length) badge = 'Falta confirmar un requisito';
   else if (a.hasG && a.exact) badge = a.exact.pass ? 'Requisitos de aprobación cumplidos' : 'La nota ingresada no alcanza';
   else if (a.exact?.pass) badge = a.id === 'physics' ? 'No necesitas Global' : a.id === 'programming' ? 'Ya apruebas sin recuperativo' : 'Opcional: ya apruebas';
   else if (a.id === 'physics' && a.exact) badge = a.exact.eligible ? 'Debes rendir Global' : 'No cumples los requisitos para Global';
@@ -166,11 +187,11 @@ function renderCalculation(a) {
   const pending = a.pending.map(f => f.label).join(', ') || 'No quedan notas ordinarias pendientes.';
   document.querySelector('#calculation').innerHTML = `${c.formulas.map(x => `<div class="formula">${esc(x)}</div>`).join('')}${a.weightKnown !== null ? `<p><strong>${fmt(a.weightKnown * 100)}% de la ${a.id === 'calculus1' ? 'base previa a L' : a.id === 'algebra' ? 'base previa a ω' : a.id === 'physics' ? 'base previa a α' : 'ponderación'}</strong> tiene una nota definida. Aporte de esas notas: <strong>${fmt(a.pointsKnown, 4)} puntos</strong>${a.hasG ? ' antes de reemplazos' : ''}.</p>` : '<p>Con descartes y condiciones pendientes, el número de notas registradas no equivale al peso definitivo del ramo.</p>'}<table class="calculation-table"><tbody>${Object.entries(details).filter(([, v]) => v !== null).map(([k, v]) => `<tr><td>${labels[k] || k}</td><td>${esc(fmt(v, 6))}</td></tr>`).join('')}<tr><td>Nota semestral</td><td>${a.errors.length ? '—' : esc(a.exact ? fmt(a.exact.semester, 6) : rangeText(a.range))}</td></tr><tr><td>Nota final</td><td>${a.errors.length ? '—' : esc(a.exact ? fmt(a.exact.final, 6) : 'Pendiente')}</td></tr></tbody></table><p><strong>Pendientes:</strong> ${esc(pending)}</p>${a.exact?.replaced ? `<p>Se reemplazó ${esc(a.exact.replaced.replace('c', 'Certamen '))} por la nota de ${c.recoveryName}.</p>` : ''}${Object.entries(a.dropped).map(([name, keys]) => `<p>Descartes de ${name === 'controls' ? 'controles' : 'tareas'}: ${keys.map(k => k.replace('q', 'Control ').replace('t', 'Tarea ')).join(', ')}.</p>`).join('')}<p>La meta para varias pendientes supone <strong>la misma nota en cada una</strong>, manteniendo las demás notas. No reemplaza los mínimos individuales. Un promedio final consolidado cuenta como una entrada en el progreso.</p><p>Los cálculos usan fracciones exactas. Las decisiones se toman antes de redondear la pantalla. Los mínimos recomendados se elevan a la centésima siguiente; se usa 54,5 para aprobación final y 49,5 para presentación al Global de Física. Los otros mínimos se verifican por separado.</p><button class="text-button" data-action="rules">${icon('book')} Leer reglas y fuentes</button>`;
 }
-function dialogHTML(html) { document.querySelector('#dialog-content').innerHTML = `<div class="dialog-body">${html}</div>`; document.querySelector('#dialog').showModal(); }
+function dialogHTML(html) { document.querySelector('#dialog-content').innerHTML = `<div class="dialog-body">${html}</div>`; const dialog = document.querySelector('#dialog'); const heading = dialog.querySelector('h2'); if (heading) { heading.id = 'dialog-title'; dialog.setAttribute('aria-labelledby', 'dialog-title'); } dialog.showModal(); }
 function closeDialog() { document.querySelector('#dialog').close(); pendingImport = null; }
 function rulesDialog() {
   const c = COURSES[state.activeCourse];
-  dialogHTML(`<h2>Las reglas de ${c.short}</h2><p>Versión ${RULE_VERSION}. Cada asignatura tiene una lógica independiente.</p><ul>${c.rules.map(x => `<li>${esc(x)}</li>`).join('')}</ul>${c.formulas.map(x => `<div class="formula">${esc(x)}</div>`).join('')}<p><strong>Corrección del proyecto (26/10/2026):</strong> por indicación del solicitante, el umbral final es 54,5; el de presentación al Global de Física es 49,5 y dos certámenes bajo 50 bloquean su aprobación. Estas correcciones no aparecen en los PDFs originales. Se mantienen los mínimos adicionales de cada ramo.</p><h3>Documentos utilizados</h3>${c.sources.map(s => `<div class="source-entry"><b>${esc(s.title)} · ${esc(s.pages)}</b>${esc(s.file)}</div>`).join('')}<p>Usa notas en escala 0–100, no puntajes brutos. Esta herramienta interpreta los documentos suministrados; una actualización de coordinación debe incorporarse a la versión correspondiente.</p><div class="dialog-actions"><button class="primary-button" data-action="close">Entendido</button></div>`);
+  dialogHTML(`<h2>Las reglas de ${c.short}</h2><p>Versión ${RULE_VERSION}. Cada asignatura tiene una lógica independiente.</p><ul>${c.rules.map(x => `<li>${esc(x)}</li>`).join('')}</ul>${c.formulas.map(x => `<div class="formula">${esc(x)}</div>`).join('')}<p><strong>Criterios vigentes:</strong> el umbral final es 54,5 y el de presentación al Global de Física es 49,5, según la corrección del proyecto del 26/10/2026. Desde el 14/11/2026, Física permite aprobar mediante Global con varios certámenes bajo 50. Se mantienen los demás mínimos de cada ramo.</p><h3>Documentos utilizados</h3>${c.sources.map(s => `<div class="source-entry"><b>${esc(s.title)} · ${esc(s.pages)}</b>${esc(s.file)}</div>`).join('')}<p>Usa notas en escala 0–100, no puntajes brutos. Esta herramienta interpreta los documentos suministrados; una actualización de coordinación debe incorporarse a la versión correspondiente.</p><div class="dialog-actions"><button class="primary-button" data-action="close">Entendido</button></div>`);
 }
 function helpDialog() { dialogHTML('<h2>Un poco de claridad para tu semestre.</h2><p>Rumbo revisa cada ramo con sus propias reglas. No necesitas completar todo para empezar.</p><ol><li><strong>Elige tu asignatura.</strong> Confirma los datos de tu paralelo cuando el reglamento tenga una ambigüedad.</li><li><strong>Ingresa tus notas reales.</strong> Un campo vacío queda pendiente; un 0 sí es una nota.</li><li><strong>Mira tu próximo objetivo.</strong> La meta indica qué necesitas y bajo qué condiciones.</li><li><strong>Prueba “¿Y si saco…?”.</strong> Los campos violetas son hipótesis. Al volver a Mis notas, vuelves a tus resultados reales.</li></ol><p>Los promedios oficiales se usan como notas finales de su grupo. Si solo conoces un promedio provisional, simúlalo o desglosa las evaluaciones y deja las futuras vacías.</p><p>Tus datos se guardan en este navegador. Exporta un respaldo para llevarlos a otro equipo. El sitio no envía tus notas a un servidor.</p><p>“Ya puedes respirar” solo aparece cuando las reglas calculadas permiten aprobar. No se promete aprobación con un simple promedio parcial.</p><div class="dialog-actions"><button class="primary-button" data-action="close">Vamos con mis notas</button></div>'); }
 function exportState() { const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'rumbo-mis-notas.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); toast('Respaldo exportado. Contiene tus notas reales y tus simulaciones.'); }
@@ -190,13 +211,15 @@ function example() {
   save(); shell(); toast('Ejemplo simulado. Sus ajustes son ilustrativos; tus notas reales siguen intactas.');
 }
 document.addEventListener('click', event => {
+  if(event.target.closest('.skip-link')) { event.preventDefault(); document.querySelector('#main')?.focus(); return; }
   const course = event.target.closest('[data-course]');
-  if (course) { state.activeCourse = course.dataset.course; save(); shell(); return; }
+  if (course) { navigate('#notas/' + course.dataset.course); return; }
   const tab = event.target.closest('[data-mode-tab]');
   if (tab) { active().scenario = tab.dataset.modeTab === 'sim'; save(); renderForm(); updateResults(); return; }
   const button = event.target.closest('[data-action]'); if (!button) return;
   const action = button.dataset.action; event.preventDefault();
-  if (action === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (action === 'home' || action === 'grades') navigate('#notas/' + state.activeCourse);
+  if (action === 'directory') navigate('#consultas');
   if (action === 'rules') rulesDialog();
   if (action === 'help') helpDialog();
   if (action === 'close') closeDialog();
@@ -207,7 +230,7 @@ document.addEventListener('click', event => {
   if (action === 'undo-case') undoCase();
   if (action === 'reset') dialogHTML(`<h2>¿Limpiar ${COURSES[state.activeCourse].short}?</h2><p>Se borrarán las notas y simulaciones de este ramo en este navegador. Puedes exportar un respaldo antes.</p><div class="dialog-actions"><button class="secondary-button" data-action="close">Conservar mis notas</button><button class="primary-button" data-action="confirm-reset">Limpiar este ramo</button></div>`);
   if (action === 'confirm-reset') { state.courses[state.activeCourse] = blankCourse(state.activeCourse); delete previousScenarios[state.activeCourse]; delete caseOptions[state.activeCourse]; closeDialog(); save(); shell(); toast('Este ramo quedó limpio. Los demás conservan sus notas.'); }
-  if (action === 'confirm-import' && pendingImport) { state = pendingImport; for (const id of COURSE_IDS) { delete previousScenarios[id]; delete caseOptions[id]; } closeDialog(); save(); shell(); toast('Respaldo importado.'); }
+  if (action === 'confirm-import' && pendingImport) { state = pendingImport; for (const id of COURSE_IDS) { delete previousScenarios[id]; delete caseOptions[id]; } closeDialog(); navigate('#notas/' + state.activeCourse,{replace:true}); toast('Respaldo importado.'); }
 });
 document.addEventListener('input', event => {
   if (event.target.matches('[data-case-rest]')) { caseOptions[state.activeCourse] ||= {}; caseOptions[state.activeCourse].rest = event.target.value; renderCaseRows(); return; }
@@ -229,6 +252,11 @@ document.querySelector('#import-file').addEventListener('change', async event =>
   finally { event.target.value = ''; }
 });
 document.querySelector('#dialog').addEventListener('click', e => { if (e.target === e.currentTarget) closeDialog(); });
+const initialCourse = location.hash.match(/^#notas\/([a-z0-9-]+)$/)?.[1];
+if (COURSE_IDS.includes(initialCourse)) state.activeCourse = initialCourse;
+function syncRoute() { if(location.hash===renderedHash)return; const course=location.hash.match(/^#notas\/([a-z0-9-]+)$/)?.[1]; if(COURSE_IDS.includes(course)){state.activeCourse=course;save();} shell(); }
+window.addEventListener('popstate',syncRoute);
+window.addEventListener('hashchange',syncRoute);
 shell();
 if (loaded.warning) toast(loaded.warning);
 

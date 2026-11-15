@@ -16,7 +16,7 @@ function readConfig(input, base) {
   return result;
 }
 export function validateState(data, { allowInvalidDrafts = false } = {}) {
-  if (!data || data.schemaVersion !== 1 || ![RULE_VERSION, '2026-2.1', '2026-2.2'].includes(data.ruleVersion) || !data.courses || typeof data.courses !== 'object') throw new Error('Este respaldo no corresponde a la versión actual de Rumbo. Tus datos actuales siguen intactos.');
+  if (!data || data.schemaVersion !== 1 || ![RULE_VERSION, '2026-2.1', '2026-2.2', '2026-2.3'].includes(data.ruleVersion) || !data.courses || typeof data.courses !== 'object') throw new Error('Este respaldo no corresponde a la versión actual de Rumbo. Tus datos actuales siguen intactos.');
   const state = blankState();
   if (COURSE_IDS.includes(data.activeCourse)) state.activeCourse = data.activeCourse;
   for (const id of COURSE_IDS) {
@@ -48,6 +48,6 @@ export function validateState(data, { allowInvalidDrafts = false } = {}) {
   return state;
 }
 export function readState(storage) {
-  try { const raw = storage.getItem(STORAGE_KEY); const data = raw ? JSON.parse(raw) : null; return { state: data ? validateState(data, { allowInvalidDrafts: true }) : blankState(), warning: data && data.ruleVersion !== RULE_VERSION ? 'Actualizamos MAT071 con el reglamento correcto. Tus notas se conservaron; el taller y el factor η anteriores ya no participan. Completa sus controles y el nuevo laboratorio.' : null }; }
+  try { const raw = storage.getItem(STORAGE_KEY); const data = raw ? JSON.parse(raw) : null; return { state: data ? validateState(data, { allowInvalidDrafts: true }) : blankState(), warning: data && data.ruleVersion !== RULE_VERSION ? (data.ruleVersion === '2026-2.3' ? 'Actualizamos Física: varios certámenes bajo 50 ya no bloquean el Global. Tus notas se conservaron.' : 'Tus notas se conservaron. MAT071 usa el reglamento correcto y Física permite varios certámenes bajo 50 para rendir Global, cumpliendo los demás requisitos.') : null }; }
   catch { return { state: blankState(), warning: 'No pudimos abrir el guardado anterior. No lo sobrescribimos automáticamente; puedes importar un respaldo.' }; }
 }

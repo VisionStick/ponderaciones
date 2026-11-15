@@ -69,9 +69,10 @@ export function evaluate(id, config, values, { recovery = null, alpha = 1, contr
   const nl = labValue(config, groups, v);
   const ps = nc.mul('0.6').add(pco.mul('0.08')).add(pta.mul('0.12')).add(nl.mul('0.2')).mul(alpha);
   const details = { nc, pco, pta, nl, alpha: q(alpha) };
-  const requirements = [{ label: 'Laboratorio ≥ 55', met: nl.gte(55), value: nl }, { label: 'Cada certamen ≥ 50 (directa)', met: cs.every(x => x.gte(50)), value: min(...cs) }, { label: 'Promedio semestral ≥ 54,5 (directa)', met: ps.gte(PASS_MARK), value: ps }, { label: 'Como máximo un certamen bajo 50', met: cs.filter(x => x.lt(50)).length < 2, value: q(cs.filter(x => x.lt(50)).length) }];
+  const requirements = [{ label: 'Laboratorio ≥ 55', met: nl.gte(55), value: nl }, { label: 'Cada certamen ≥ 50 (directa)', met: cs.every(x => x.gte(50)), value: min(...cs) }, { label: 'Promedio semestral ≥ 54,5 (directa)', met: ps.gte(PASS_MARK), value: ps }];
   // The lab and PS gates precede Global, including after a justified replacement.
-  if (nl.lt(55) || ps.lt(PHYSICS_PRESENTATION) || cs.filter(x => x.lt(50)).length >= 2) return { semester: ps, final: min(ps, 54), pass: false, direct: false, eligible: false, replaced, reason: cs.filter(x => x.lt(50)).length >= 2 ? 'two-certs' : nl.lt(55) ? 'lab' : 'presentation', details, requirements };
+  requirements.push({ label: 'PS ≥ 49,5 (presentación al Global)', met: ps.gte(PHYSICS_PRESENTATION), value: ps });
+  if (nl.lt(55) || ps.lt(PHYSICS_PRESENTATION)) return { semester: ps, final: min(ps, 54), pass: false, direct: false, eligible: false, replaced, reason: nl.lt(55) ? 'lab' : 'presentation', details, requirements };
   if (ps.gte(PASS_MARK) && cs.every(x => x.gte(50))) return { semester: ps, final: ps, pass: true, direct: true, eligible: false, replaced, reason: 'passed', details, requirements };
   if (recovery === null) return { semester: ps, final: null, pass: false, direct: false, eligible: true, replaced, reason: 'global', details, requirements };
   const blended = ps.mul('0.6').add(q(recovery).mul('0.4'));
@@ -153,7 +154,6 @@ export function analyze(id, state, scenario = false) {
   let status = 'progress';
   if (c.errors.length) status = 'invalid';
   else if (!known.length && !hasG) status = 'empty';
-  else if (id === 'physics' && certs.filter(x => x.lt(50)).length >= 2) status = 'impossible';
   else if (c.issues.length) status = 'conditional';
   else if (exact?.pass) status = 'approved';
   else if (guaranteed) status = 'secured';
@@ -210,10 +210,6 @@ export function messageFor(a) {
     impossible: ['Estas notas ya no alcanzan.', a.hasG ? 'Con esta nota de recuperación y lo registrado, ni el máximo en las pendientes permite aprobar.' : `Ni el máximo en lo que falta permite cumplir todas las reglas${a.id === 'programming' && a.config.recoveryAccess === 'no' ? ' sin acceso al recuperativo' : ', incluyendo la recuperación cuando corresponde'}. Revisa el detalle para entender qué requisito limita el resultado.`]
   };
   let [title, body] = texts[a.status];
-  if (a.id === 'physics' && ['c1', 'c2', 'c3'].filter(k => a.values[k]?.lt(50) && a.config.justified !== k).length >= 2 && !a.errors.length) {
-    title = 'Dos certámenes bajo 50 bloquean la aprobación.';
-    body = 'Con esta restricción de Física, el Global no permite aprobar aunque el promedio sea alto. Revisa las notas oficiales si alguna está incorrecta.';
-  }
   if (a.scenario && a.simulated.length) { title = a.status === 'approved' || a.status === 'secured' ? '¡Con este escenario apruebas!' : title; body = 'En esta simulación: ' + body.charAt(0).toLowerCase() + body.slice(1); }
   if (a.recoveryConditional && a.simulated.includes('g')) body += ' Este escenario supone que estás habilitado/a para rendir el recuperativo.';
   return { title, body };
