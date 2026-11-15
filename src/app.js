@@ -1,7 +1,7 @@
 import { COURSES, COURSE_IDS, RULE_VERSION, modelFor } from './courses.js';
 import { analyze, messageFor, omega } from './engine.js';
 import { parseGrade, parseLabFactor, mean } from './rational.js';
-import { buildCases, labProgress, applyCaseToCourse, undoCaseForCourse } from './scenarios.js';
+import { buildCases, labProgress, applyCaseToCourse, undoCaseForCourse } from './scenarios.js?v=2.0.1';
 import { STORAGE_KEY, blankCourse, readState, validateState } from './state.js';
 
 import { esc, icon } from './ui.js';

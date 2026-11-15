@@ -32,6 +32,8 @@ Se usaron notas ficticias, escritorio y un marco de390×844; no un teléfono fí
 
 La captura `casos-global-corregidos.jpg` documenta la tabla corregida con datos sintéticos. Las páginas y respaldos usados exclusivamente para QA no se publican.
 
+La verificación posterior al despliegue detectó archivos antiguos todavía servidos en la dirección pública. Se versionaron las URLs de los archivos modificados (entrada, escenarios y estilos) para evitar reutilizar la copia anterior en caché. Al cambiar estos archivos en otra versión, debe actualizarse también su revisión en las referencias correspondientes.
+
 ---
 
 # Validación previa · Rumbo 2.0 · reglas 2026-2.4
